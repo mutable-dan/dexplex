@@ -1,12 +1,12 @@
 CC=g++-8
 
 INSTALL_DIR = ../bin
-INCLUDE_DIR = -I. -I../cpr/include/
+INCLUDE_DIR = -I. -I../cpr/include/ -I../json/include/
 
 
 EXE      = dexplex
-SOURCE   = rest.cpp
-LINKLIBS = -lpthread -L../cpr/lib/ -lcpr -lcurl
+SOURCE   = src/main.cpp
+LINKLIBS = -lpthread -L/usr/lib/libdaemon/ -L../cpr/lib/ -lcpr -lcurl -ldaemon
 
 OBJS     = $(SOURCE:.cpp=.o) 
 DEPS     = $(SOURCE:.cpp=.d) 
@@ -42,4 +42,4 @@ uninstall :
 	/bin/rm -rf $(INSTALL_DIR)
 
 clean :
-	rm -f *.o $(EXE) *.d
+	rm -f src/*.o src/*.d $(EXE) 
