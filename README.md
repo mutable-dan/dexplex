@@ -49,6 +49,6 @@ write bg to logs and db
 manage rest reader and writer
 notifications of problems
 handle more than one user
-
+encode pwd in config
 
 
