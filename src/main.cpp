@@ -1,10 +1,17 @@
 #include <iostream>
 #include <queue>
 #include <algorithm>
+#include <sstream>
 
 #include <libdaemon/daemon.h>
 #include <mutlib/config.h>
 #include <mutlib/logger.h>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+   #include <spdlog/spdlog.h>
+   #include <spdlog/sinks/daily_file_sink.h>
+#pragma GCC diagnostic pop
 
 
 using namespace std;
@@ -14,6 +21,46 @@ void display();
 
 int main( int argc, char* argv[] )
 {
+   spdlog::set_level( spdlog::level::debug );
+   auto dl =spdlog::daily_logger_mt( "daily", "logs/dexmux.log", 0, 0 );
+   spdlog::info( "{} starting", argv[0] );
+   dl->info( "{} starting", argv[0] );
+
+   mutlib::config cfg;
+   string strAccount;
+   string strPassword;
+   string strApplicationId;
+   bool bComplete = true;
+   stringstream sstr;
+   sstr << "errors processing config file: ";
+   if( cfg.read( "dex.config" ) )
+   {
+      if( false == cfg.get( "account", strAccount ) ) 
+      {
+         bComplete = false;
+         sstr << " missing account";
+      }
+      if( false == cfg.get( "password", strPassword ) ) 
+      {
+         bComplete = false;
+         sstr << " missing passowrd";
+      }
+      if( false == cfg.get( "applicationid", strApplicationId ) ) 
+      {
+         bComplete = false;
+         sstr << " missing applicationid";
+      }
+   }
+
+   if( bComplete == false )
+   {
+      dl->error( "config info missing: {}", sstr.str() );
+      return -1;
+   }
+
+   dl->info( "config file read ok" );
+
+
    tools::Daemon app;
    queue<string> qCommands;
    app.setName( string( argv[0] ) );

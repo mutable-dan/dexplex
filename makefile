@@ -1,12 +1,12 @@
 CC=g++-8
 
 INSTALL_DIR = ../bin
-INCLUDE_DIR = -I. -I../cpr/include/ -I../json/include/
+INCLUDE_DIR = -I. -I../cpr/include/ -I../json/include/ -I../spdlog/include/
 
 
 EXE      = dexplex
-SOURCE   = src/main.cpp
-LINKLIBS = -lpthread -L/usr/lib/libdaemon/ -L../cpr/lib/ -lcpr -lcurl -ldaemon
+SOURCE   = src/main.cpp src/dex-rest.cpp
+LINKLIBS = -L/usr/lib/libdaemon/ -L../cpr/lib/ -lspdlog -lcpr -lcurl -ldaemon -lmut -lpthread 
 
 OBJS     = $(SOURCE:.cpp=.o) 
 DEPS     = $(SOURCE:.cpp=.d) 
@@ -14,6 +14,7 @@ DEPS     = $(SOURCE:.cpp=.d)
 -include $(DEPS)
 
 CFLAGSALL     = -std=c++17 -Wall -Wextra -Werror -Wshadow -march=native -fno-default-inline -fno-stack-protector -pthread -Wall -Werror -pedantic -Wextra -Weffc++ -Waddress -Warray-bounds -Wno-builtin-macro-redefined -Wundef
+CFLAGSALL    += -DSPDLOG_COMPILED_LIB
 CFLAGSRELEASE = -O2 -DNDEBUG $(CFLAGSALL)
 CFLAGSDEBUG   = -ggdb3 -DDEBUG $(CFLAGSALL)
 
