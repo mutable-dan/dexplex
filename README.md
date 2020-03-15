@@ -28,7 +28,7 @@ client multiplexer for dexcom
 
   logging
   -------------------------------------
-  spdlog - hdr only
+  spdlog - not using hdr only to reduce compile time
 
   https://github.com/gabime/spdlog
 
@@ -41,12 +41,12 @@ get BG call working - done
 basic logging - done
 basic read config - done
 class to manage rest dexcom calls - in progress
- has to handle errors
+ has to handle errors - in progress
  has to handle re-login 
  handle when to request new data based on system time of last received
  handle missing data requests
-write bg to logs and db
-manage rest reader and writer
+write bg to logs and db - in progress
+manage rest reader and writer - in progress
 notifications of problems
 handle more than one user
 encode pwd in config
