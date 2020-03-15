@@ -7,8 +7,11 @@
 #include <mutlib/config.h>
 #include <mutlib/logger.h>
 
+#include "../include/dex-mgr.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Weffc++"
+   // https://github.com/gabime/spdlog
    #include <spdlog/spdlog.h>
    #include <spdlog/sinks/daily_file_sink.h>
 #pragma GCC diagnostic pop
@@ -17,44 +20,27 @@
 using namespace std;
 
 void display();
-
+//void logging( std::string &a_strMessage )
 
 int main( int argc, char* argv[] )
 {
    spdlog::set_level( spdlog::level::debug );
-   auto dl =spdlog::daily_logger_mt( "daily", "logs/dexmux.log", 0, 0 );
+   auto dl   = spdlog::daily_logger_mt( "daily", "logs/dexmux.log", 0, 0 );
+   auto bglog = spdlog::daily_logger_mt( "daily", "logs/bg.log", 0, 0 );   // blood glucose log
    spdlog::info( "{} starting", argv[0] );
    dl->info( "{} starting", argv[0] );
 
-   mutlib::config cfg;
-   string strAccount;
-   string strPassword;
-   string strApplicationId;
-   bool bComplete = true;
-   stringstream sstr;
-   sstr << "errors processing config file: ";
-   if( cfg.read( "dex.config" ) )
-   {
-      if( false == cfg.get( "account", strAccount ) ) 
-      {
-         bComplete = false;
-         sstr << " missing account";
-      }
-      if( false == cfg.get( "password", strPassword ) ) 
-      {
-         bComplete = false;
-         sstr << " missing passowrd";
-      }
-      if( false == cfg.get( "applicationid", strApplicationId ) ) 
-      {
-         bComplete = false;
-         sstr << " missing applicationid";
-      }
-   }
 
-   if( bComplete == false )
+   auto loggingiInfo = [&] ( const std::string &a_strMessage ) -> void
    {
-      dl->error( "config info missing: {}", sstr.str() );
+      bglog->info( a_strMessage );
+   };
+   (void)loggingiInfo;
+
+   mutlib::config cfg;
+   if( !cfg.read( "dex.config" ) )
+   {
+      dl->error( "error opening config file:" );
       return -1;
    }
 
@@ -107,7 +93,12 @@ int main( int argc, char* argv[] )
       {
          cout << "run in foreground" << endl << endl;
          // start prog body
+         dexshareManager dsm;
+         dsm.start( cfg );
+         cout << "waiting" << endl;
          app.runForeground();
+         dsm.stop();
+         cout << "done" << endl;
       } else
       {
          cout << "run as daemon" << endl << endl;
@@ -119,6 +110,9 @@ int main( int argc, char* argv[] )
          cout << "start" << endl;
 
          // start prog body async
+         dexshareManager dsm;
+         dsm.start( cfg );
+         cout << "waiting" << endl;
          app.wait();
          cout << "stop running" << endl;
          // issue a stop to any threads in prog body

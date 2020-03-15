@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
 #include <string>
 #include <optional>
 #include <vector>
+#include <mutex>
 
 class dexcom_share final
 {
@@ -41,6 +43,7 @@ class dexcom_share final
       const std::string        m_strShareGetBG         = "ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues";
 
       const int32_t            m_cnHttpOk              = 200;
+      int32_t                  m_nReqTimeout_sec      = 30;
       std::vector<std::string> m_errorList;
 
       std::string              m_strUserName;
@@ -55,19 +58,26 @@ class dexcom_share final
       // get BC status
       uint64_t                 m_ulLastReading         = 0;
       std::vector<bg_t>        m_vReadings;
+      mutable std::mutex       m_muxBG;
+
 
       bool login();
       bool getBloodSugar();
       void error( const std::string &a_strError ) { m_errorList.push_back( a_strError ); }
-      void error( const char* a_pszError  ) { m_errorList.push_back( a_pszError ); }
+      void error( const char* a_pszError  )       { m_errorList.push_back( a_pszError ); }
 
    public:
+      dexcom_share() {}
       dexcom_share( dexcom_share& )  = delete;
       dexcom_share( dexcom_share&& ) = delete;
 
-      void userName( const std::string& a_strUserName )   { m_strUserName  = a_strUserName; }
-      void password( const std::string& a_strPassword )   { m_strPassword  = a_strPassword; }
-      void accoundId( const std::string& a_strAccountId ) { m_strAccoundId = a_strAccountId; }
+      void userName  ( const std::string& a_strUserName    ) { m_strUserName  = a_strUserName; }
+      void password  ( const std::string& a_strPassword    ) { m_strPassword  = a_strPassword; }
+      void accoundId ( const std::string& a_strAccountId   ) { m_strAccoundId = a_strAccountId; }
+      void setTimeout( const int32_t      a_nTimoutSeconds ) { m_nReqTimeout_sec = a_nTimoutSeconds; }
+
+      bool start( );
+      bool stop();
       
       bool isError() const{ return m_errorList.size() > 0; }
       const auto& errors() const { return m_errorList; }

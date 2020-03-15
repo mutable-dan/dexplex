@@ -1,5 +1,7 @@
 #include "../include/dex-rest.h"
 #include <sstream>
+#include <future>
+#include <chrono>
 #include <exception>
 
 #include <boost/format.hpp>
@@ -129,16 +131,33 @@ bool dexcom_share::getBloodSugar()
       return false;
    }
 
+   // protect m_vReadings 
+   lock_guard<std::mutex> lg( m_muxBG );
+
    bg_t bg_value;
    m_vReadings.clear();
    for( auto &[key, value] : js_results.items() )
    {
-       string strDt    = value[ "DT" ];
-       string strSt    = value[ "ST" ];
-       string strWt    = value[ "WT" ];
-       string strBG    = value[ "Value" ];
-       string strTrend = value[ "Trend" ];
+       string  strDt;    
+       string  strSt;    
+       string  strWt;    
+       int32_t nBG;    
+       int32_t nTrend;
 
+       try
+       {
+          strDt    = value[ "DT" ];
+          strSt    = value[ "ST" ];
+          strWt    = value[ "WT" ];
+          nBG      = value[ "Value" ];
+          nTrend   = value[ "Trend" ];
+       } catch( std::exception &e )
+       {
+          stringstream sstr;
+          sstr << "bad avlue" << value;
+          error( sstr.str() );
+          continue;
+       }
       
 
        const int32_t cnRemoveDate = 6;
@@ -146,7 +165,7 @@ bool dexcom_share::getBloodSugar()
        strSt.erase( strSt.begin(), strSt.begin()+cnRemoveDate );
        strWt.erase( strWt.begin(), strWt.begin()+cnRemoveDate );
        
-       const int32_t cnRemoveMillisec = 10;
+       const int32_t cnRemoveMillisec = 13;
        strDt.erase( strDt.begin()+cnRemoveMillisec, strDt.end() );
        strSt.erase( strSt.begin()+cnRemoveMillisec, strSt.end() );
        strWt.erase( strWt.begin()+cnRemoveMillisec, strWt.end() );
@@ -154,10 +173,51 @@ bool dexcom_share::getBloodSugar()
        bg_value.dt    = stoll( strDt );
        bg_value.st    = stoll( strSt );
        bg_value.wt    = stoll( strWt );
-       bg_value.bg    = stoi( strBG );
-       bg_value.trend = stoi( strTrend );
-       m_vReadings.push_back( bg_value );
+       bg_value.bg    = nBG;
+       bg_value.trend = nTrend;
 
+       m_vReadings.push_back( bg_value );
+   }
+
+   return true;
+}
+
+
+
+bool dexcom_share::start()
+{
+   auto thdLogin = async( &dexcom_share::login, this );
+   future_status status = thdLogin.wait_for( chrono::seconds( m_nReqTimeout_sec ) );  // change to wait_for
+   if( status == future_status::timeout )
+   {
+      error( "login request timed out" );
+      return false;
+   }
+
+   bool bRes = thdLogin.get();
+   if( bRes == true )
+   {
+      bRes = false;
+      // get BG
+      auto thdBG = async( &dexcom_share::getBloodSugar, this );
+      status = thdBG.wait_for( chrono::seconds( m_nReqTimeout_sec ) );
+      if( status == future_status::timeout )
+      {
+         error( "BG request timed out" );
+         return false;
+      }
+
+      bRes = thdBG.get();
+      if( bRes == false )
+      {
+         error( "BG request failed" );
+         return false;
+      }
+   } else
+   {
+      // login failed
+      error( "login failed" );
+      return false;
    }
 
    return true;
