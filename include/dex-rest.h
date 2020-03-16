@@ -36,6 +36,7 @@ class dexcom_share final
          char        trend; // Trend  1- "Double Up", 2- "Single UP", 3- "45 Up", 4- "Flat", 5- "45 Down", 6- "Single Down", 7- "Double Down"
       };
       using returnType = std::optional<std::string>;
+      using vector_BG  = std::vector<bg_t>;
 
    private:
       const std::string        m_strShareUrlbase       = "https://share2.dexcom.com/";
@@ -57,12 +58,12 @@ class dexcom_share final
 
       // get BC status
       uint64_t                 m_ulLastReading         = 0;
-      std::vector<bg_t>        m_vReadings;
+      vector_BG                m_vReadings;
       mutable std::mutex       m_muxBG;
 
 
       bool login();
-      bool getBloodSugar();
+      bool dexcomShareData();
       void error( const std::string &a_strError ) { m_errorList.push_back( a_strError ); }
       void error( const char* a_pszError  )       { m_errorList.push_back( a_pszError ); }
 
@@ -76,7 +77,9 @@ class dexcom_share final
       void accoundId ( const std::string& a_strAccountId   ) { m_strAccoundId = a_strAccountId; }
       void setTimeout( const int32_t      a_nTimoutSeconds ) { m_nReqTimeout_sec = a_nTimoutSeconds; }
 
-      bool start( );
+      bool getBG_Reading( vector_BG& a_vBg );
+
+      bool start();
       bool stop();
       
       bool isError() const{ return m_errorList.size() > 0; }

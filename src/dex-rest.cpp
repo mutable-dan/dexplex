@@ -86,7 +86,7 @@ bool dexcom_share::login()
 //
 // get BG
 // ----------------------------------------------------------------------------------------
-bool dexcom_share::getBloodSugar()
+bool dexcom_share::dexcomShareData()
 {
    if( (m_bLoggedIn == false) || (m_strSessionId.length() == 0) )
    {
@@ -182,8 +182,19 @@ bool dexcom_share::getBloodSugar()
    return true;
 }
 
+//
+// 
+// ----------------------------------------------------------------------------------------
+bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
+{
+   lock_guard<std::mutex> lg( m_muxBG );
+   a_vbg = m_vReadings;
+   return true;
+}
 
-
+//
+// 
+// ----------------------------------------------------------------------------------------
 bool dexcom_share::start()
 {
    auto thdLogin = async( &dexcom_share::login, this );
@@ -199,7 +210,7 @@ bool dexcom_share::start()
    {
       bRes = false;
       // get BG
-      auto thdBG = async( &dexcom_share::getBloodSugar, this );
+      auto thdBG = async( &dexcom_share::dexcomShareData, this );
       status = thdBG.wait_for( chrono::seconds( m_nReqTimeout_sec ) );
       if( status == future_status::timeout )
       {

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <queue>
 #include <algorithm>
+#include <functional>
 #include <sstream>
 
 #include <libdaemon/daemon.h>
@@ -26,16 +27,31 @@ int main( int argc, char* argv[] )
 {
    spdlog::set_level( spdlog::level::debug );
    auto dl   = spdlog::daily_logger_mt( "daily", "logs/dexmux.log", 0, 0 );
-   auto bglog = spdlog::daily_logger_mt( "daily", "logs/bg.log", 0, 0 );   // blood glucose log
+   auto bglog = spdlog::daily_logger_mt( "bg", "logs/bg.log", 0, 0 );   // blood glucose log
    spdlog::info( "{} starting", argv[0] );
    dl->info( "{} starting", argv[0] );
 
+   // check shared ptr for logging
+   if( false == (bool)dl )
+   {
+      std::cerr << "logging failed to start" << endl;
+      return -1;
+   }
 
+   if( false == (bool)bglog )
+   {
+      std::cerr << "ibg logging failed to start" << endl;
+      return -1;
+   }
+   // log check done
+
+   // setup logging callbacks
    auto loggingiInfo = [&] ( const std::string &a_strMessage ) -> void
    {
       bglog->info( a_strMessage );
    };
-   (void)loggingiInfo;
+   std::function< void( const std::string& ) > fn_bgLog = loggingiInfo;
+   // callbacks done
 
    mutlib::config cfg;
    if( !cfg.read( "dex.config" ) )
@@ -94,7 +110,7 @@ int main( int argc, char* argv[] )
          cout << "run in foreground" << endl << endl;
          // start prog body
          dexshareManager dsm;
-         dsm.start( cfg );
+         dsm.start( cfg, fn_bgLog );
          cout << "waiting" << endl;
          app.runForeground();
          dsm.stop();
@@ -111,7 +127,7 @@ int main( int argc, char* argv[] )
 
          // start prog body async
          dexshareManager dsm;
-         dsm.start( cfg );
+         dsm.start( cfg, fn_bgLog );
          cout << "waiting" << endl;
          app.wait();
          cout << "stop running" << endl;
