@@ -18,10 +18,13 @@
 
 using namespace std;
 
-//
-// get sesssion of from authentication
-// sessioid is used in subsequent calls
-// ----------------------------------------------------------------------------------------
+
+///
+/// \brief dexcom_share::login
+/// get sesssion of from authentication, sessioid is used in subsequent calls
+///
+/// \return
+///
 bool dexcom_share::login()
 {
    m_strSessionId.clear();
@@ -83,9 +86,11 @@ bool dexcom_share::login()
 }
 
 
-//
-// get BG
-// ----------------------------------------------------------------------------------------
+
+///
+/// \brief dexcom_share::dexcomShareData, get blood glucose (bg) value, use session id
+/// \return
+///
 bool dexcom_share::dexcomShareData()
 {
    if( (m_bLoggedIn == false) || (m_strSessionId.length() == 0) )
@@ -182,9 +187,12 @@ bool dexcom_share::dexcomShareData()
    return true;
 }
 
-//
-// 
-// ----------------------------------------------------------------------------------------
+
+///
+/// \brief dexcom_share::getBG_Reading, block vReadings and return a copy
+/// \param a_vbg
+/// \return
+///
 bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 {
    lock_guard<std::mutex> lg( m_muxBG );
@@ -192,9 +200,11 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
    return true;
 }
 
-//
-// 
-// ----------------------------------------------------------------------------------------
+
+///
+/// \brief dexcom_share::start - call private start method async
+/// \return
+///
 bool dexcom_share::start()
 {
    thread thd( &dexcom_share::_start, this );
@@ -203,9 +213,9 @@ bool dexcom_share::start()
 }
 
 
-//
-// 
-// ----------------------------------------------------------------------------------------
+///
+/// \brief dexcom_share::_start - login and get bg values and
+///
 void dexcom_share::_start()
 {
    bool bLoggedIn  = false;

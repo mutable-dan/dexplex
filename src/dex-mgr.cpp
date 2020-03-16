@@ -4,9 +4,16 @@
 
 using namespace std;
 
-//
-// start rest client on an interval
-bool dexshareManager::start( mutlib::config &a_cfg, std::function< void(const std::string &) > &a_logbg )
+
+///
+/// \brief dexshareManager::start - run rest client on an interval
+/// \param a_cfg
+/// \param a_logbg
+/// \param a_logLevel
+/// \return
+///
+bool dexshareManager::start( mutlib::config &a_cfg, std::function< void( const std::string &) > &a_logbg,
+                                                    std::function< void( const std::string &, const logging::logLevel_t ) > &a_logLevel )
 {
    string  strAccount;
    string  strPassword;
@@ -41,7 +48,7 @@ bool dexshareManager::start( mutlib::config &a_cfg, std::function< void(const st
 
    if( bComplete == false )
    {
-      //dl->error( "config info missing: {}", sstr.str() );
+     a_logLevel( sstr.str(), logging::logLevel_t::ERROR );
       return -1;
    }
 
@@ -63,11 +70,12 @@ bool dexshareManager::start( mutlib::config &a_cfg, std::function< void(const st
       a_logbg( sstr1.str() );
       sstr1.str( std::string() );
    }
-
    return true;
 }
 
-
+///
+/// \brief dexshareManager::stop - signal start thd to stop
+///
 void dexshareManager::stop()
 {
    m_ds.stop();

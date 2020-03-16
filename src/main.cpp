@@ -8,6 +8,7 @@
 #include <mutlib/config.h>
 #include <mutlib/logger.h>
 
+#include "../include/common.h"
 #include "../include/dex-mgr.h"
 
 #pragma GCC diagnostic push
@@ -45,12 +46,38 @@ int main( int argc, char* argv[] )
    }
    // log check done
 
-   // setup logging callbacks
-   auto loggingiInfo = [&] ( const std::string &a_strMessage ) -> void
+   /////////////////////////////////////////
+   ///  setup logging callbacks
+   // write bg to log
+   auto loggingBG = [&] ( const std::string &a_strMessage ) -> void
    {
       bglog->info( a_strMessage );
    };
-   std::function< void( const std::string& ) > fn_bgLog = loggingiInfo;
+   std::function< void( const std::string& ) > fn_bgLog = loggingBG;
+
+   // write app logging
+   auto logging = [&] ( const std::string &a_strMessage, const logging::logLevel_t a_level ) -> void
+   {
+       switch( a_level )
+       {
+           case logging::logLevel_t::INFO:
+               dl->info( a_strMessage );
+               break;
+           case logging::logLevel_t::WARN:
+               dl->warn( a_strMessage );
+               break;
+           case logging::logLevel_t::ERROR:
+               dl->error( a_strMessage );
+               break;
+           case logging::logLevel_t::VERBOSE:
+               dl->debug( a_strMessage );
+               break;
+           default:
+               dl->error( a_strMessage );
+       }
+   };
+   std::function< void( const std::string &, const logging::logLevel_t) > fn_log = logging;
+   /////////////////////////////////////////
    // callbacks done
 
    mutlib::config cfg;
@@ -110,7 +137,7 @@ int main( int argc, char* argv[] )
          cout << "run in foreground" << endl << endl;
          // start prog body
          dexshareManager dsm;
-         dsm.start( cfg, fn_bgLog );
+         dsm.start( cfg, fn_bgLog, fn_log );
          cout << "waiting" << endl;
          app.runForeground();
          dsm.stop();
@@ -127,7 +154,7 @@ int main( int argc, char* argv[] )
 
          // start prog body async
          dexshareManager dsm;
-         dsm.start( cfg, fn_bgLog );
+         dsm.start( cfg, fn_bgLog, fn_log );
          cout << "waiting" << endl;
          app.wait();
          cout << "stop running" << endl;
