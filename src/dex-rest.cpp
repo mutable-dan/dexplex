@@ -92,9 +92,9 @@ bool dexcom_share::dexcomShareData()
    {
       return false;
    }
-   string strUrl = m_strShareUrlbase + m_strShareGetBG;
-   string strMinues = "1440";
-   string strMaxCount = "3";
+   string strUrl      = m_strShareUrlbase + m_strShareGetBG;
+   string strMinues   = std::to_string( m_nMinutes );
+   string strMaxCount = std::to_string( m_nMaxCount );
 
    cpr::Response response;
    try
@@ -197,39 +197,65 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 // ----------------------------------------------------------------------------------------
 bool dexcom_share::start()
 {
-   auto thdLogin = async( &dexcom_share::login, this );
-   future_status status = thdLogin.wait_for( chrono::seconds( m_nReqTimeout_sec ) );  // change to wait_for
-   if( status == future_status::timeout )
-   {
-      error( "login request timed out" );
-      return false;
-   }
-
-   bool bRes = thdLogin.get();
-   if( bRes == true )
-   {
-      bRes = false;
-      // get BG
-      auto thdBG = async( &dexcom_share::dexcomShareData, this );
-      status = thdBG.wait_for( chrono::seconds( m_nReqTimeout_sec ) );
-      if( status == future_status::timeout )
-      {
-         error( "BG request timed out" );
-         return false;
-      }
-
-      bRes = thdBG.get();
-      if( bRes == false )
-      {
-         error( "BG request failed" );
-         return false;
-      }
-   } else
-   {
-      // login failed
-      error( "login failed" );
-      return false;
-   }
-
+   thread thd( &dexcom_share::_start, this );
+   m_thd = std::move( thd );
    return true;
+}
+
+
+//
+// 
+// ----------------------------------------------------------------------------------------
+void dexcom_share::_start()
+{
+   bool bLoggedIn  = false;
+   while( m_bStop == false )
+   {
+      if( false == bLoggedIn ) 
+      {
+         auto thdLogin = async( &dexcom_share::login, this );
+         future_status status = thdLogin.wait_for( chrono::seconds( m_nReqTimeout_sec ) );  
+         if( status == future_status::timeout )
+         {
+            error( "login request timed out" );
+            continue; 
+         }
+         bLoggedIn = thdLogin.get();
+      }
+
+      if( bLoggedIn == true )
+      {
+         // get BG
+         // check for missing data and ajust
+         auto thdBG = async( &dexcom_share::dexcomShareData, this );
+         future_status status = thdBG.wait_for( chrono::seconds( m_nReqTimeout_sec ) );
+         if( status == future_status::timeout )
+         {
+            // thread is stuck, abandon and start again but log so a fix can be found
+            // error( "BG request timed out" ); // make this a callback
+            bLoggedIn = false;  // assume for now that a failure means need to re-loggin
+         }
+
+         if( thdBG.get() == false )
+         {
+            // error( "BG request failed" ); // make this a callback
+            bLoggedIn = false;
+         }
+
+      } else
+      {
+         // login failedi, wait and try again
+         //error( "login failed" );  // make a callback
+      }
+
+      int32_t nRepeat = m_nShareCheckInterval * 60 / 5;  // number of 5s sleeps
+      while( --nRepeat > 0 )
+      {
+         this_thread::sleep_for( chrono::seconds( 5 ) );
+         if( true ==  m_bStop )
+         {
+            break;
+         }
+      }
+   }
 }
