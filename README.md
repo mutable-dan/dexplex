@@ -45,7 +45,9 @@ class to manage rest dexcom calls - in progress
  has to handle re-login 
  handle when to request new data based on system time of last received
  handle missing data requests
-write bg to logs and db - in progress
+cache for BG
+ will read from logs at start (if avail)
+write bg to logs and db - done
 manage rest reader and writer - in progress
 notifications of problems
 handle more than one user
