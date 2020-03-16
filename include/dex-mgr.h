@@ -5,6 +5,7 @@
 
 #include <mutlib/config.h>
 #include <functional>
+#include <atomic>
 
 //
 // start and manage rest client
@@ -15,10 +16,21 @@
 class dexshareManager
 {
    private:
-      dexcom_share      m_ds;
-   public:
-      bool start( mutlib::config &a_cfg, std::function< void( const std::string &) > &a_log_bg,
-                                         std::function< void( const std::string &, const logging::logLevel_t ) > &a_log_level );
+      dexcom_share          m_ds;
+      sync_tools::monitor   m_sync;
+      std::atomic_bool      m_bReaderReady    = false;    // is reader ready to recieve bg
+      std::atomic_bool      m_breaderStop     = false;    // stop the reader
+
+      void reader( std::function< void( const std::string &) >                             a_log_bg,
+                   std::function< void( const std::string &, const logging::logLevel_t ) > a_log_level );
+
+
+    public:
+      bool start( mutlib::config &a_cfg,
+                  std::function< void( const std::string &) >                             &a_log_bg,
+                  std::function< void( const std::string &, const logging::logLevel_t ) > &a_log_level );
       void stop();
+
+
 
 };
