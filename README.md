@@ -4,6 +4,8 @@ client multiplexer for dexcom
 
  dependancies
  ----------------
+ libcurl
+  ubuntu 18.04: apt install libcurl4-gnutls-dev 
 
   cpr
   ----------------------------------
