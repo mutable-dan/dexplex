@@ -197,6 +197,7 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 {
    lock_guard<std::mutex> lg( m_muxBG );
    a_vbg = m_vReadings;
+   m_vReadings.clear();
    return true;
 }
 
@@ -205,9 +206,9 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 /// \brief dexcom_share::start - call private start method async
 /// \return
 ///
-bool dexcom_share::start()
+bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync )
 {
-   thread thd( &dexcom_share::_start, this );
+   thread thd( &dexcom_share::_start, this, a_pSync );
    m_thd = std::move( thd );
    return true;
 }
@@ -216,7 +217,7 @@ bool dexcom_share::start()
 ///
 /// \brief dexcom_share::_start - login and get bg values and
 ///
-void dexcom_share::_start()
+void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync )
 {
    bool bLoggedIn  = false;
    while( m_bStop == false )
@@ -250,6 +251,9 @@ void dexcom_share::_start()
          {
             // error( "BG request failed" ); // make this a callback
             bLoggedIn = false;
+         } else
+         {
+             a_pSync->signal();
          }
 
       } else

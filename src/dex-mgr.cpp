@@ -53,10 +53,9 @@ bool dexshareManager::start( mutlib::config &a_cfg,
       return -1;
    }
 
-   (void)a_logbg;
-   (void)a_logLevel;
-
-   thread thd( &dexshareManager::reader, this, a_logbg, a_logLevel );  // *************
+   m_sp = make_shared<sync_tools::monitor>();
+   a_logLevel( "starting reader", logging::LOG_TYPE::VERBOSE );
+   thread thd( &dexshareManager::reader, this, a_logbg, a_logLevel );
    while( m_bReaderReady == false )
    {
        std::this_thread::yield( ); // spin until reader is ready
@@ -64,9 +63,14 @@ bool dexshareManager::start( mutlib::config &a_cfg,
    m_ds.userName( strAccount );
    m_ds.password( strPassword );
    m_ds.accoundId( strApplicationId );
-   m_ds.start();
-   m_ds.wait();  
+
+   a_logLevel( "starting dexshare", logging::LOG_TYPE::VERBOSE );
+   m_ds.start( m_sp );
+   m_ds.wait();
+   a_logLevel( "dexshare ended", logging::LOG_TYPE::VERBOSE );
+   m_sp->signal();
    thd.join();
+   a_logLevel( "reader ended", logging::LOG_TYPE::VERBOSE );
    return true;
 }
 
@@ -91,15 +95,15 @@ void dexshareManager::reader(
              std::function< void( const std::string &) >                             a_log_bg,
              std::function< void( const std::string &, const logging::logLevel_t ) > a_log_level )
 {
-    a_log_bg( "test" );
-    a_log_level( "test", logging::LOG_TYPE::INFO );
-
+    a_log_level( "entering reader", logging::LOG_TYPE::VERBOSE );
     dexcom_share::vector_BG vBg;
     stringstream sstr;
     m_bReaderReady = true;  // not perfect, but good enough sync
     while( m_breaderStop == false )
     {
-        m_sync.wait();
+        m_sp->wait();
+        if( m_breaderStop == true ) continue;
+        a_log_level( "read bg", logging::LOG_TYPE::VERBOSE );
         m_ds.getBG_Reading( vBg );
 
         string strBgFormat = R"(dt:%d,st:%d,wt:%d bg:%d,trend:%d)";
@@ -110,5 +114,7 @@ void dexshareManager::reader(
            sstr.str( std::string() );
            // write to cache
         }
+        a_log_level( "read complete", logging::LOG_TYPE::VERBOSE );
     }
+    a_log_level( "exit reader", logging::LOG_TYPE::VERBOSE );
 }

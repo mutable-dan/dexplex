@@ -19,12 +19,14 @@
 // SOFTWARE.
 
 #pragma once
+#include "../include/common.h"
 #include <string>
 #include <optional>
 #include <vector>
 #include <mutex>
 #include <atomic>
 #include <thread>
+#include <memory>
 
 class dexcom_share final
 {
@@ -46,8 +48,8 @@ class dexcom_share final
       const std::string        m_strShareGetBG         = "ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues";
 
       const int32_t            m_cnHttpOk              = 200;
-      int32_t                  m_nReqTimeout_sec       = 30;
-      int32_t                  m_nShareCheckInterval   = 5;   // every 5 min 
+      int32_t                  m_nReqTimeout_sec       = 120;
+      int32_t                  m_nShareCheckInterval   = 1;   // every 5 min
       // see param defs for rest api calls: https://github.com/nightscout/share2nightscout-bridge
       // firstFetchCount - Changes maxCount during the very first update only
       int32_t                  m_nMinutes              = 1440;   // time window to search for data, default is one day
@@ -77,7 +79,7 @@ class dexcom_share final
 
       bool login();
       bool dexcomShareData();
-      void _start();
+      void _start( std::shared_ptr<sync_tools::monitor> a_pSync );
       void error( const std::string &a_strError ) { m_errorList.push_back( a_strError ); }
       void error( const char* a_pszError  )       { m_errorList.push_back( a_pszError ); }
 
@@ -93,7 +95,7 @@ class dexcom_share final
 
       bool getBG_Reading( vector_BG& a_vBg );
 
-      bool start();
+      bool start( std::shared_ptr<sync_tools::monitor> a_pSync );
       void stop()           { m_bStop = true; }
       void wait()           { if( m_thd.joinable() == true ) m_thd.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }

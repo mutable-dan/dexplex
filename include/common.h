@@ -15,7 +15,7 @@ namespace sync_tools
     {
         private:
             bool                        m_bFlag     = false;
-            std::condition_variable_any m_cv;
+            std::condition_variable     m_cv;
             std::mutex                  m_mux;
         public:
             monitor() {}
@@ -24,17 +24,16 @@ namespace sync_tools
 
             void signal()
             {
-                m_mux.lock();
+                std::unique_lock<std::mutex> lock( m_mux );
                 m_bFlag = true;
                 m_cv.notify_one();
-                m_mux.unlock();
             }
 
             void wait()
             {
-                m_mux.lock();
-                m_cv.wait( m_mux, [&]() -> bool { return m_bFlag; } );
-                m_mux.unlock();
+                std::unique_lock<std::mutex> lock( m_mux );
+                m_cv.wait( lock, [&]() -> bool { return m_bFlag; } );
+                m_bFlag = false;
             }
     };
 
