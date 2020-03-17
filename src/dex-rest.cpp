@@ -140,7 +140,6 @@ bool dexcom_share::dexcomShareData()
    lock_guard<std::mutex> lg( m_muxBG );
 
    bg_t bg_value;
-   m_vReadings.clear();
    for( auto &[key, value] : js_results.items() )
    {
        string  strDt;    

@@ -29,6 +29,10 @@ int main( int argc, char* argv[] )
    spdlog::set_level( spdlog::level::debug );
    auto dl   = spdlog::daily_logger_mt( "daily", "logs/dexmux.log", 0, 0 );
    auto bglog = spdlog::daily_logger_mt( "bg", "logs/bg.log", 0, 0 );   // blood glucose log
+
+   spdlog::flush_every( std::chrono::seconds(3) );
+   dl->flush_on( spdlog::level::err );
+
    spdlog::info( "{} starting", argv[0] );
    dl->info( "{} starting", argv[0] );
 
@@ -99,7 +103,7 @@ int main( int argc, char* argv[] )
       display();
       return -1;
    }
-   
+
    for( int32_t nIndex=1; nIndex<argc; ++nIndex )
    {
       string strCommand = argv[nIndex];
@@ -172,7 +176,9 @@ int main( int argc, char* argv[] )
    {
       display();
    }
-   
+
+   dl->flush();
+   bglog->flush();
    return 0;
 }
 
