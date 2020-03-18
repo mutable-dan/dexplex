@@ -1,5 +1,18 @@
 # dexplex
-client multiplexer for dexcom 
+Dexcom produces a CGM (continuous glucose monitor) and has a 'share' interface to allow caregivers to monitor a user.
+Opensource projects such as xDrip+ https://jamorham.github.io/#xdrip-plus provide excellent alternative monitoring solutions for android.  xDrip can connect directly to dexcom share or you can setup your own server with https://github.com/nightscout
+
+The advantage of setting up your own server:
+* nightscout give you a many analytics, like xDrip
+* reduce the load on dexcom by having many devices connect to your server
+* you have your data
+
+There are a few things about the nighscout server that I didn't like, so this project will do one thing only.  It will conect to dexcom share and allow many devices to connect to it, the being a good citizen of dexcom.
+
+1. connect to dexcom
+2. cache BG data (blood glucose)
+3. provide a rest API for xdrip connections
+
 
 
  dependancies
