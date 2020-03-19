@@ -60,20 +60,28 @@ bool dexshareManager::start( mutlib::config &a_cfg,
    {
        std::this_thread::yield( ); // spin until reader is ready
    }
+   m_thdReader = std::move( thd );
    m_ds.userName( strAccount );
    m_ds.password( strPassword );
    m_ds.accoundId( strApplicationId );
 
    a_logLevel( "starting dexshare", logging::LOG_TYPE::VERBOSE );
    m_ds.start( m_sp );
-   m_ds.wait();
-   a_logLevel( "dexshare ended", logging::LOG_TYPE::VERBOSE );
-   m_sp->signal();
-   thd.join();
-   a_logLevel( "reader ended", logging::LOG_TYPE::VERBOSE );
    return true;
 }
 
+///
+/// \brief dexcom_share::wait
+///
+void dexshareManager::wait()
+{
+    m_ds.wait();
+    //a_logLevel( "dexshare ended", logging::LOG_TYPE::VERBOSE );
+    m_sp->signal();
+    m_thdReader.join();
+    //a_logLevel( "reader ended", logging::LOG_TYPE::VERBOSE );
+    return;
+}
 ///
 /// \brief dexshareManager::stop - signal start thd to stop
 ///

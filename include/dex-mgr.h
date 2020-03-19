@@ -7,6 +7,7 @@
 #include <functional>
 #include <atomic>
 #include <memory>
+#include <thread>
 
 //
 // start and manage rest client
@@ -18,6 +19,7 @@ class dexshareManager
 {
    private:
       dexcom_share          m_ds;
+      std::thread           m_thdReader;
       std::shared_ptr<sync_tools::monitor> m_sp;
       std::atomic_bool      m_bReaderReady    = false;    // is reader ready to recieve bg
       std::atomic_bool      m_breaderStop     = false;    // stop the reader
@@ -31,6 +33,7 @@ class dexshareManager
                   std::function< void( const std::string &) >                             &a_log_bg,
                   std::function< void( const std::string &, const logging::logLevel_t ) > &a_log_level );
       void stop();
+      void wait();
 
 
 

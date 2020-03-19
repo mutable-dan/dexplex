@@ -145,6 +145,7 @@ int main( int argc, char* argv[] )
          cout << "waiting" << endl;
          app.runForeground();
          dsm.stop();
+         dsm.wait();
          cout << "done" << endl;
       } else
       {
