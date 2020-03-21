@@ -22,7 +22,6 @@
 using namespace std;
 
 void display();
-//void logging( std::string &a_strMessage )
 
 int main( int argc, char* argv[] )
 {
@@ -138,38 +137,42 @@ int main( int argc, char* argv[] )
 
       if( true == bRunForeground )
       {
-         cout << "run in foreground" << endl << endl;
+         dl->info( "running in foreground" );
          // start prog body
          dexshareManager dsm;
          dsm.start( cfg, fn_bgLog, fn_log );
-         cout << "waiting" << endl;
+         dl->info( "waiting" );
          app.runForeground();
          dsm.stop();
          dsm.wait();
-         cout << "done" << endl;
+         dl->info( "done" );
       } else
       {
-         cout << "run as daemon" << endl << endl;
+         dl->info( "running as daemon" );
          if( true == bDebug )
          {
-            cout << "stdio and srderr not redirected" << endl;
+            dl->info( "stdio and srderr not redirected" );
          }
          app.runDaemon( false, bDebug );
-         cout << "start" << endl;
 
          // start prog body async
          dexshareManager dsm;
-         dsm.start( cfg, fn_bgLog, fn_log );
-         cout << "waiting" << endl;
-         app.wait();
-         cout << "stop running" << endl;
+         if( true == dsm.start( cfg, fn_bgLog, fn_log ) )
+         {
+             dl->info( "started, main in wait state" );
+             app.wait();
+             dl->info( "shut down completing" );
+         } else
+         {
+             dl->error( "failed to start" );
+         }
          // issue a stop to any threads in prog body
       }
    } 
    else 
    if( qCommands.front() == "stop" )
    {
-      cout << "stop" << endl;
+      dl->info( "stop issued" );
       qCommands.pop();
       app.stop();
    }
@@ -178,6 +181,7 @@ int main( int argc, char* argv[] )
       display();
    }
 
+   dl->info( "done" );
    dl->flush();
    bglog->flush();
    return 0;

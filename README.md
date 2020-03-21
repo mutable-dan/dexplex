@@ -57,15 +57,16 @@ basic logging - done
 basic read config - done
 class to manage rest dexcom calls - in progress
  has to handle errors - in progress
- has to handle re-login 
+ has to handle re-login  - in progress
  handle when to request new data based on system time of last received
  handle missing data requests
 cache for BG
  will read from logs at start (if avail)
 write bg to logs and db - done
 manage rest reader and writer - in progress
-notifications of problems
+notifications of problems- - in progress
 handle more than one user
 encode pwd in config
+handle errors in classes under mgr class
 
 

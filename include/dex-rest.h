@@ -50,6 +50,7 @@ class dexcom_share final
       const int32_t            m_cnHttpOk              = 200;
       int32_t                  m_nReqTimeout_sec       = 120;
       int32_t                  m_nShareCheckInterval   = 5;   // every 5 min
+
       // see param defs for rest api calls: https://github.com/nightscout/share2nightscout-bridge
       // firstFetchCount - Changes maxCount during the very first update only
       int32_t                  m_nMinutes              = 1440;   // time window to search for data, default is one day
