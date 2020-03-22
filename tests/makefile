@@ -5,7 +5,7 @@ INCLUDE_DIR = -I. -I../../../
 
 
 EXE      = test_dexplex
-SOURCE   = test_cache.cpp ../src/bg_cache.cpp 
+SOURCE   = main.cpp test_cache.cpp ../src/bg_cache.cpp 
 LINKLIBS = 
 
 OBJS     = $(SOURCE:.cpp=.o) 
