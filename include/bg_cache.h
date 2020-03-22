@@ -39,11 +39,12 @@ namespace tools
             size_t size() const noexcept { return m_bg_ring.size(); }
 
             void   push( const int64_t a_nDT, const int64_t a_nST, const int64_t a_nWT, const int64_t a_nValue, const int64_t a_nTrend ) noexcept;
-            void   push( const bg_data& a_data ) noexcept;
-            auto   front()                  noexcept -> std::tuple<bool, bg_data>;
-            auto   front( size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< tools::bg_data> >;
+            void   push( const bg_data& a_data )  noexcept;
+            auto   front()                        noexcept -> std::tuple<bool, bg_data>;
+            auto   front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< tools::bg_data> >;
+            bool   check( const size_t a_nCount ) const { return (a_nCount <= m_bg_ring.size()) && (a_nCount > 0); }
 
-            bg_buffer_t* data() { return &m_bg_ring; }
+            const bg_buffer_t* data() { return &m_bg_ring; }
     };
 
 }

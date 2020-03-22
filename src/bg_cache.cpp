@@ -46,18 +46,19 @@ auto tools::bg_cache::front() noexcept -> std::tuple<bool, tools::bg_data>
 /// \param a_nCount
 /// \return
 ///
-auto tools::bg_cache::front( size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< tools::bg_data> >
+auto tools::bg_cache::front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< tools::bg_data> >
 {
     vector< tools::bg_data > vData;
-    if( m_bg_ring.empty() )
+    if( m_bg_ring.empty() || (a_nCount == 0) )
     {
         return { false, vData };
     }
     if( a_nCount <= m_bg_ring.size() )
     {
-        auto rend = m_bg_ring.end() - m_bg_ring.size() - a_nCount;
+        size_t cc =  m_bg_ring.size() - a_nCount;
         auto rst  = m_bg_ring.begin();
-        for( auto it=rst; it!=rend; ++it )
+        auto rend = m_bg_ring.end() - cc;
+        for( auto it=rst; it<rend; ++it )
         {
             vData.push_back( *it );
         }

@@ -7,7 +7,8 @@
 
 TEST_CASE( "test cache", "[cache]" )
 {
-    tools::bg_cache ch( 4 );
+    const int32_t nSize = 4;
+    tools::bg_cache ch( nSize );
 
     SECTION( "pushing to container" )
     {
@@ -51,5 +52,68 @@ TEST_CASE( "test cache", "[cache]" )
         INFO( "item[1]:" << vItem[1].DT );
         REQUIRE( vItem[0].DT == 1002 );
         REQUIRE( vItem[1].DT == 1001 );
+
+        auto [bOk1, vItem1 ] = ch.front( 0 );
+        REQUIRE( bOk1 == false );
+        REQUIRE( vItem1.size() == 0 );
+
+        auto [bOk2, vItem2 ] = ch.front( 1 );
+        REQUIRE( bOk2 == true );
+        REQUIRE( vItem2.size() == 1 );
+
+        auto [bOk3, vItem3 ] = ch.front( 3 );
+        REQUIRE( bOk3 == true );
+        REQUIRE( vItem3.size() == 3 );
+
+        auto [bOk4, vItem4 ] = ch.front( 4 );
+        REQUIRE( bOk4 == false );
+        REQUIRE( vItem4.size() == 0 );
+
+        REQUIRE( ch.check( 0 ) == false );
+        REQUIRE( ch.check( 4 ) == false );
+        REQUIRE( ch.check( 5 ) == false );
+        REQUIRE( ch.check( 1 ) == true );
+        REQUIRE( ch.check( 2 ) == true );
+        REQUIRE( ch.check( 3 ) == true );
+
     }
+
+    SECTION( "check getting top n elements with 2 after pushing past capacity" )
+    {
+        ch.push( 1000, 1000, 1000, 103, 4 );
+        ch.push( 1001, 1001, 1001, 104, 4 );
+        ch.push( 1002, 1002, 1002, 105, 5 );
+        REQUIRE( ch.check( 3 ) == true );
+        ch.push( 1003, 1003, 1003, 107, 5 );  // q full
+        REQUIRE( ch.check( 4 ) == true );
+        auto [bOk1, vItem1 ] = ch.front( 1 );
+        REQUIRE( bOk1 == true );
+        REQUIRE( vItem1.size() == 1 );
+        REQUIRE( vItem1[0].DT == 1003 );
+
+        ch.push( 1004, 1004, 1004, 108, 5 );  // 1000 pushed out
+        REQUIRE( ch.check( 4 ) == true );
+        auto [bOk2, vItem2 ] = ch.front( 1 );
+        REQUIRE( vItem2.size() == 1 );
+        REQUIRE( vItem2[0].DT == 1004 );
+
+        ch.push( 1005, 1005, 1005, 108, 5 );  // 1001 pushed out
+        REQUIRE( ch.check( 4 ) == true );
+        auto [bOk3, vItem3 ] = ch.front( 1 );
+        REQUIRE( bOk3 == true );
+        REQUIRE( vItem3.size() == 1 );
+        REQUIRE( vItem3[0].DT == 1005 );
+
+        auto [bOk4, vItem4 ] = ch.front( 5 );
+        REQUIRE( bOk4 == false );
+
+        auto [bOk5, vItem5 ] = ch.front( 4 );
+        REQUIRE( vItem5.size() == 4 );
+        REQUIRE( vItem5[0].DT == 1005 );
+        REQUIRE( vItem5[1].DT == 1004 );
+        REQUIRE( vItem5[2].DT == 1003 );
+        REQUIRE( vItem5[3].DT == 1002 );
+
+    }
+
 }
