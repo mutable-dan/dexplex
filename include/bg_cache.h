@@ -37,7 +37,7 @@ namespace tools
             bg_cache( int32_t a_nCapacity = 288 );
             void push( const int64_t a_nDT, const int64_t a_nST, const int64_t a_nWT, const int64_t a_nValue, const int64_t a_nTrend );
             void push( const data& a_data );
-            auto front() const;
+            std::tuple<bool, data> front(); // const [bool, decltype (data)];
     };
 
 }

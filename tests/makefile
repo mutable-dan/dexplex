@@ -5,7 +5,7 @@ INCLUDE_DIR = -I. -I../../../
 
 
 EXE      = test_dexplex
-SOURCE   = test_cache.cpp ../src/bg_cache.cpp
+SOURCE   = test_cache.cpp ../src/bg_cache.cpp 
 LINKLIBS = 
 
 OBJS     = $(SOURCE:.cpp=.o) 
@@ -42,4 +42,4 @@ uninstall :
 	/bin/rm -rf $(INSTALL_DIR)
 
 clean :
-	rm -f src/*.o src/*.d $(EXE) 
+	rm -f *.o *.d $(EXE) 

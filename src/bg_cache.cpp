@@ -4,6 +4,7 @@
 
 tools::bg_cache::bg_cache( int32_t a_nCapacity ): m_nCapacity( a_nCapacity )
 {
+    m_bg_ring.resize( m_nCapacity );
 }
 
 void tools::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int64_t a_nWT, const int64_t a_nValue, const int64_t a_nTrend )
@@ -19,14 +20,15 @@ void tools::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int6
 
 void tools::bg_cache::push( const data &a_data )
 {
-    m_bg_ring.push_back( a_data );
+    m_bg_ring.push_front( a_data );
 }
 
-auto tools::bg_cache::front() const
+std::tuple<bool, tools::data> tools::bg_cache::front()
 {
     if( m_bg_ring.empty() )
     {
         return std::make_tuple( false, data() );
     }
     return std::make_tuple( true, m_bg_ring.front() );
+//    return { true, m_bg_ring.front() };
 }
