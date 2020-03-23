@@ -69,41 +69,52 @@ TEST_CASE( "test cache", "[cache]" )
         REQUIRE( bOk4 == false );
         REQUIRE( vItem4.size() == 0 );
 
-        REQUIRE( ch.check( 0 ) == false );
-        REQUIRE( ch.check( 4 ) == false );
-        REQUIRE( ch.check( 5 ) == false );
-        REQUIRE( ch.check( 1 ) == true );
-        REQUIRE( ch.check( 2 ) == true );
-        REQUIRE( ch.check( 3 ) == true );
+        REQUIRE( ch.verify_request( 0 ) == false );
+        REQUIRE( ch.verify_request( 4 ) == false );
+        REQUIRE( ch.verify_request( 5 ) == false );
+        REQUIRE( ch.verify_request( 1 ) == true );
+        REQUIRE( ch.verify_request( 2 ) == true );
+        REQUIRE( ch.verify_request( 3 ) == true );
 
     }
 
-    SECTION( "check getting top n elements with 2 after pushing past capacity" )
+    SECTION( "check pushing past capacity" )
     {
+        // after 4 items, old ones are pushed out
         ch.push( 1000, 1000, 1000, 103, 4 );
         ch.push( 1001, 1001, 1001, 104, 4 );
         ch.push( 1002, 1002, 1002, 105, 5 );
-        REQUIRE( ch.check( 3 ) == true );
+
+        INFO( "test requesting too many items" );
+        REQUIRE( ch.verify_request( 3 ) == true );
+        REQUIRE( ch.verify_request( 4 ) == false );
+        auto [bOk0, vItem0 ] = ch.front( 4 );
+        REQUIRE( bOk0 == false );
+        REQUIRE( vItem0.size() == 0 );
+
         ch.push( 1003, 1003, 1003, 107, 5 );  // q full
-        REQUIRE( ch.check( 4 ) == true );
+        REQUIRE( ch.verify_request( 4 ) == true );
         auto [bOk1, vItem1 ] = ch.front( 1 );
         REQUIRE( bOk1 == true );
         REQUIRE( vItem1.size() == 1 );
         REQUIRE( vItem1[0].DT == 1003 );
 
+        INFO( "test eviction" );
         ch.push( 1004, 1004, 1004, 108, 5 );  // 1000 pushed out
-        REQUIRE( ch.check( 4 ) == true );
+        REQUIRE( ch.verify_request( 4 ) == true );
         auto [bOk2, vItem2 ] = ch.front( 1 );
         REQUIRE( vItem2.size() == 1 );
         REQUIRE( vItem2[0].DT == 1004 );
 
+        INFO( "test eviction" );
         ch.push( 1005, 1005, 1005, 108, 5 );  // 1001 pushed out
-        REQUIRE( ch.check( 4 ) == true );
+        REQUIRE( ch.verify_request( 4 ) == true );
         auto [bOk3, vItem3 ] = ch.front( 1 );
         REQUIRE( bOk3 == true );
         REQUIRE( vItem3.size() == 1 );
         REQUIRE( vItem3[0].DT == 1005 );
 
+        INFO( "test items after eviction" );
         auto [bOk4, vItem4 ] = ch.front( 5 );
         REQUIRE( bOk4 == false );
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../include/loggingInterface.h"
 #include "../include/dex-rest.h"
 #include "../include/common.h"
 
@@ -30,6 +31,7 @@ class dexshareManager
 
     public:
       bool start( mutlib::config &a_cfg,
+                  logging::logggingInterface& a_log,
                   std::function< void( const std::string &) >                             &a_log_bg,
                   std::function< void( const std::string &, const logging::logLevel_t ) > &a_log_level );
       void stop();

@@ -4,12 +4,24 @@
 
 using namespace std;
 
+///
+/// \brief tools::bg_cache::bg_cache
+/// \param a_nCapacity
+///
 tools::bg_cache::bg_cache( int32_t a_nCapacity ): m_nCapacity( a_nCapacity )
 {
-    //    m_bg_ring.resize( m_nCapacity );
     m_bg_ring.set_capacity( m_nCapacity );
 }
 
+///
+/// \brief tools::bg_cache::push
+/// \note push one item on, if cap is met, push old one off
+/// \param a_nDT
+/// \param a_nST
+/// \param a_nWT
+/// \param a_nValue
+/// \param a_nTrend
+///
 void tools::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int64_t a_nWT, const int64_t a_nValue, const int64_t a_nTrend ) noexcept
 {
     bg_data item;
@@ -21,6 +33,11 @@ void tools::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int6
     m_bg_ring.push_front( item );
 }
 
+///
+/// \brief tools::bg_cache::push
+/// \note push one item on, if cap is met, push old one off
+/// \param a_data
+///
 void tools::bg_cache::push( const bg_data &a_data ) noexcept
 {
     m_bg_ring.push_front( a_data );

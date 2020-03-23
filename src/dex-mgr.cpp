@@ -1,4 +1,5 @@
 #include "../include/dex-mgr.h"
+
 #include <sstream>
 #include <boost/format.hpp>
 
@@ -13,6 +14,7 @@ using namespace std;
 /// \return
 ///
 bool dexshareManager::start( mutlib::config &a_cfg,
+                             logging::logggingInterface& a_log,
                              std::function< void( const std::string &) >                             &a_logbg,
                              std::function< void( const std::string &, const logging::logLevel_t ) > &a_logLevel )
 {
@@ -67,6 +69,7 @@ bool dexshareManager::start( mutlib::config &a_cfg,
     m_ds.password( strPassword );
     m_ds.accoundId( strApplicationId );
 
+    a_log.logInfo( "starting dexshare" );
     a_logLevel( "starting dexshare", logging::LOG_TYPE::VERBOSE );
     m_ds.start( m_sp );
     return true;
