@@ -20,6 +20,7 @@
 
 #pragma once
 #include "../include/common.h"
+#include "../include/loggingInterface.h"
 #include <string>
 #include <optional>
 #include <vector>
@@ -80,7 +81,7 @@ class dexcom_share final
 
       bool login();
       bool dexcomShareData();
-      void _start( std::shared_ptr<sync_tools::monitor> a_pSync );
+      void _start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log );
       void error( const std::string &a_strError ) { m_errorList.push_back( a_strError ); }
       void error( const char* a_pszError  )       { m_errorList.push_back( a_pszError ); }
 
@@ -96,11 +97,12 @@ class dexcom_share final
 
       bool getBG_Reading( vector_BG& a_vBg );
 
-      bool start( std::shared_ptr<sync_tools::monitor> a_pSync );
+      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log &a_log );
       void stop()           { m_bStop = true; }
       void wait()           { if( m_thd.joinable() == true ) m_thd.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }
       
       bool isError() const{ return m_errorList.size() > 0; }
       const auto& errors() const { return m_errorList; }
+      void clearErrors()   { m_errorList.clear(); }
 };

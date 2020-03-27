@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <functional>
 #include <sstream>
+#include <boost/format.hpp>
 
 #include <libdaemon/daemon.h>
 #include <mutlib/config.h>
+#include <sys/types.h>
 
 #include "../include/common.h"
 #include "../include/dex-mgr.h"
@@ -31,78 +33,51 @@ int main( int argc, char* argv[] )
         cerr << "    -f  run app in foreground and do not redirect stdout and stderr" << endl;
         cerr << "    -d  do not redirect stdout and stderr - usefull for running app as daemon with console output" << endl;
     };
+    const char pszConfig[] = "dex.config";
+
     logging::log appLog;
-    appLog.levelInfo();
-    appLog.setLogger( "daily", "logs/newlog.log" );
-    appLog.logInfo( "test" );
-
-
-    auto dl   = spdlog::daily_logger_mt( "daily", "logs/dexmux.log", 0, 0 );
+    appLog.setLevelInfo();  // NOTE: must be set from config
+    appLog.setLogger( "daily", "logs/dexplex.log" );                      // app logging
     auto bglog = spdlog::daily_logger_mt( "bg", "logs/bg.log", 0, 0 );   // blood glucose log
-
     spdlog::flush_every( std::chrono::seconds(3) );
-    dl->flush_on( spdlog::level::err );
 
-    spdlog::info( "{} starting", argv[0] );
-    dl->info( "{} starting", argv[0] );
 
-    // check shared ptr for logging
-    if( false == (bool)dl )
+    //check if logging is ready else stop
+    if( false == appLog.isReady() )
     {
-        std::cerr << "logging failed to start" << endl;
+        std::cerr << "app logging failed to start" << endl;
         return -1;
     }
-
     if( false == (bool)bglog )
     {
-        std::cerr << "ibg logging failed to start" << endl;
+        std::cerr << "blood glucose logging failed to start" << endl;
         return -1;
     }
     // log check done
 
     /////////////////////////////////////////
-    ///  setup logging callbacks
+    ///  setup logging callback - can use the loginteface class, lets use std::function, they're fun and this is a fun app
     // write bg to log
     auto loggingBG = [&] ( const std::string &a_strMessage ) -> void
     {
         bglog->info( a_strMessage );
     };
     std::function< void( const std::string& ) > fn_bgLog = loggingBG;
-
-    // write app logging
-    auto logging = [&] ( const std::string &a_strMessage, const logging::logLevel_t a_level ) -> void
-    {
-        switch( a_level )
-        {
-            case logging::logLevel_t::INFO:
-                dl->info( a_strMessage );
-                break;
-            case logging::logLevel_t::WARN:
-                dl->warn( a_strMessage );
-                break;
-            case logging::logLevel_t::ERROR:
-                dl->error( a_strMessage );
-                break;
-            case logging::logLevel_t::VERBOSE:
-                dl->debug( a_strMessage );
-                break;
-            default:
-                dl->error( a_strMessage );
-        }
-    };
-    std::function< void( const std::string &, const logging::logLevel_t) > fn_log = logging;
     /////////////////////////////////////////
-    // callbacks done
+    // callback done
 
+    // read config file
     mutlib::config cfg;
-    if( !cfg.read( "dex.config" ) )
+    if( !cfg.read( pszConfig ) )
     {
-        dl->error( "error opening config file:" );
+        appLog.logError( (boost::format( "error opening config file:%s" ) % pszConfig).str() );
         return -1;
     }
 
-    dl->info( "config file read ok" );
-
+    // app start
+    appLog.logInfo( "config file read ok" );
+    appLog.logInfo( (boost::format( "%s starting" ) % argv[0]).str() );
+    spdlog::info( "{} starting", argv[0] );     // conio
 
     tools::Daemon app;
     queue<string> qCommands;
@@ -114,6 +89,7 @@ int main( int argc, char* argv[] )
         return -1;
     }
 
+    // collect app params
     for( int32_t nIndex=1; nIndex<argc; ++nIndex )
     {
         string strCommand = argv[nIndex];
@@ -121,7 +97,9 @@ int main( int argc, char* argv[] )
         qCommands.push( strCommand );
     }
 
-
+    // can start or stop app
+    // if starting, can start and run in foreground --> -f
+    // if running as daemon, can also run in debug -d mode, does not disble console IO
     if( qCommands.front() == "start" )
     {
         qCommands.pop();
@@ -148,52 +126,57 @@ int main( int argc, char* argv[] )
 
         if( true == bRunForeground )
         {
-            dl->info( "running in foreground" );
+            appLog.logInfo( "running in foreground" );
             // start prog body
             dexshareManager dsm;
-            dsm.start( cfg, appLog, fn_bgLog, fn_log );
-            dl->info( "waiting" );
-            app.runForeground();
-            dsm.stop();
-            dsm.wait();
-            dl->info( "done" );
+            if( true == dsm.start( cfg, appLog, fn_bgLog ) )  // start app, send cfg, applogger and blood glucose callback
+            {
+                appLog.logInfo( "waiting" );
+                app.runForeground();    // wait for signal, ctrl-c or sig15
+                dsm.stop();
+                dsm.wait();
+                appLog.logInfo( "app threads stopped" );
+            } else
+            {
+                appLog.logError( "failed to start" );
+            }
         } else
         {
-            dl->info( "running as daemon" );
+            appLog.logInfo( "running as daemon" );
             if( true == bDebug )
             {
-                dl->info( "stdio and srderr not redirected" );
+                appLog.logDebug( "stdio and srderr not redirected" );
             }
             app.runDaemon( false, bDebug );
+            appLog.logInfo( (boost::format( "daemon pid:%s" ) % getpid()).str() );
+            cout << "daemon" << endl;
 
             // start prog body async
             dexshareManager dsm;
-            if( true == dsm.start( cfg, appLog, fn_bgLog, fn_log ) )
+            if( true == dsm.start( cfg, appLog, fn_bgLog ) )
             {
-                dl->info( "started, main in wait state" );
-                app.wait();
-                dl->info( "shut down completing" );
+                appLog.logInfo( "started, main in wait state" );
+                app.wait();  // wait for sig15 issue by stop
+                appLog.logInfo( "shut down completing" );
             } else
             {
-                dl->error( "failed to start" );
+                appLog.logError( "failed to start" );
             }
-            // issue a stop to any threads in prog body
         }
     }
     else
         if( qCommands.front() == "stop" )
         {
-            dl->info( "stop issued" );
+            appLog.logInfo( "stop issued" );
             qCommands.pop();
-            app.stop();
+            app.stop();  // send sig15
         }
         else
         {
             display();
         }
 
-    dl->info( "done" );
-    dl->flush();
+    appLog.logInfo( "done" );
     bglog->flush();
     return 0;
 }

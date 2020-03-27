@@ -47,6 +47,14 @@ There are a few things about the nighscout server that I didn't like, so this pr
 
   https://github.com/gabime/spdlog
 
+sample config
+-----------------------
+account=<your account login>
+password=<account pwd>
+applicationid=<app id>
+httptimeout=20
+
+note: leave out '<' and '>'
 
 
 TODO

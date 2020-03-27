@@ -1,6 +1,5 @@
 #include "../include/dex-mgr.h"
 
-#include <sstream>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -13,11 +12,11 @@ using namespace std;
 /// \param a_logLevel
 /// \return
 ///
-bool dexshareManager::start( mutlib::config &a_cfg,
-                             logging::logggingInterface& a_log,
-                             std::function< void( const std::string &) >                             &a_logbg,
-                             std::function< void( const std::string &, const logging::logLevel_t ) > &a_logLevel )
+bool dexshareManager::start( mutlib::config                              &a_cfg,
+                             logging::log                                &a_log,
+                             std::function< void( const std::string &) > &a_logbg )
 {
+    m_log = a_log;
 
     string  strAccount;
     string  strPassword;
@@ -53,13 +52,13 @@ bool dexshareManager::start( mutlib::config &a_cfg,
 
     if( bComplete == false )
     {
-        a_logLevel( sstr.str(), logging::logLevel_t::ERROR );
-        return -1;
+        m_log.logError( (boost::format( "error %s reading config file") % sstr.str()).str() );
+        return false;
     }
 
-    m_sp = make_shared<sync_tools::monitor>();
-    a_logLevel( "starting reader", logging::LOG_TYPE::VERBOSE );
-    thread thd( &dexshareManager::reader, this, a_logbg, a_logLevel );
+    m_sp = make_shared<sync_tools::monitor>();   /// moditor for syncing glucose writer and reader
+    m_log.logInfo( "starting reader" );
+    thread thd( &dexshareManager::reader, this, a_logbg );
     while( m_bReaderReady == false )
     {
         std::this_thread::yield( ); // spin until reader is ready
@@ -69,31 +68,35 @@ bool dexshareManager::start( mutlib::config &a_cfg,
     m_ds.password( strPassword );
     m_ds.accoundId( strApplicationId );
 
-    a_log.logInfo( "starting dexshare" );
-    a_logLevel( "starting dexshare", logging::LOG_TYPE::VERBOSE );
-    m_ds.start( m_sp );
+    m_log.logInfo( "starting dexshare" );
+    m_ds.start( m_sp, m_log );
     return true;
 }
+
 
 ///
 /// \brief dexcom_share::wait
 ///
 void dexshareManager::wait()
 {
-    m_ds.wait();
-    //a_logLevel( "dexshare ended", logging::LOG_TYPE::VERBOSE );
-    m_sp->signal();
-    m_thdReader.join();
-    //a_logLevel( "reader ended", logging::LOG_TYPE::VERBOSE );
+    m_ds.wait();   // wait for dexcom_share::_start to end
+    m_log.logDebug( "dexshare closing" );
+    m_sp->signal();      // issue a sig to dexshareManager::reader in case in wait
+    m_thdReader.join();  // wait for dexshareManager::reader to stop
+    m_log.logDebug( "reader ended" );
     return;
 }
+
+
 ///
 /// \brief dexshareManager::stop - signal start thd to stop
 ///
 void dexshareManager::stop()
 {
-    m_ds.stop();
-    m_breaderStop = true;
+    m_ds.stop();  // stop dexcom_share::_start
+    m_log.logDebug( "stop issued on dexcom share BG requester" );
+    m_bReaderStop = true;   // stop dexshareManager::reader
+    m_log.logDebug( "stop issued on dexcom BG reader" );
 }
 
 
@@ -104,30 +107,25 @@ void dexshareManager::stop()
 /// \param a_log_bg
 /// \param a_log_level
 ///
-void dexshareManager::reader(
-        std::function< void( const std::string &) >                             a_log_bg,
-        std::function< void( const std::string &, const logging::logLevel_t ) > a_log_level )
+void dexshareManager::reader( std::function< void( const std::string &) > a_log_bg  )
 {
-    a_log_level( "entering reader", logging::LOG_TYPE::VERBOSE );
+    string strBgFormat = R"(dt:%d,st:%d,wt:%d bg:%d,trend:%d)";
+    m_log.logInfo( "entering BG reader" );
+
     dexcom_share::vector_BG vBg;
-    stringstream sstr;
-    m_bReaderReady = true;  // not perfect, but good enough sync
-    while( m_breaderStop == false )
+    m_bReaderReady = true;  // not perfect, but good enough sync, monitor start in wait condition
+    while( m_bReaderStop == false )
     {
-        m_sp->wait();
-        if( m_breaderStop == true ) continue;
-        a_log_level( "read bg", logging::LOG_TYPE::VERBOSE );
+        m_sp->wait();   // signaled whenever data is ready
+        if( m_bReaderStop == true ) continue;
+        m_log.logDebug( "read bg" );
         m_ds.getBG_Reading( vBg );
 
-        string strBgFormat = R"(dt:%d,st:%d,wt:%d bg:%d,trend:%d)";
         for( const auto &bg : vBg  )
         {
-            sstr << boost::format( strBgFormat ) % bg.dt % bg.st % bg.wt % bg.bg % static_cast<int32_t>(bg.trend);
-            a_log_bg( sstr.str() );
-            sstr.str( std::string() );
-            // write to cache
+            a_log_bg( (boost::format( strBgFormat ) % bg.dt % bg.st % bg.wt % bg.bg % static_cast<int32_t>(bg.trend)).str() );
         }
-        a_log_level( "read complete", logging::LOG_TYPE::VERBOSE );
+        m_log.logDebug( "read complete" );
     }
-    a_log_level( "exit reader", logging::LOG_TYPE::VERBOSE );
+    m_log.logDebug( "exit reader" );
 }

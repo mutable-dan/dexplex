@@ -10,6 +10,8 @@
 #include <memory>
 #include <thread>
 
+#include <sstream>
+
 //
 // start and manage rest client
 // start and manage writers
@@ -21,22 +23,17 @@ class dexshareManager
    private:
       dexcom_share          m_ds;
       std::thread           m_thdReader;
-      std::shared_ptr<sync_tools::monitor> m_sp;
       std::atomic_bool      m_bReaderReady    = false;    // is reader ready to recieve bg
-      std::atomic_bool      m_breaderStop     = false;    // stop the reader
+      std::atomic_bool      m_bReaderStop     = false;    // stop the reader
+      logging::log          m_log;
+      std::shared_ptr<sync_tools::monitor> m_sp;          // monitor class used to sync reader with new values from dexcom_share
 
-      void reader( std::function< void( const std::string &) >                             a_log_bg,
-                   std::function< void( const std::string &, const logging::logLevel_t ) > a_log_level );
-
+      void reader( std::function< void( const std::string &) > a_log_bg );
 
     public:
-      bool start( mutlib::config &a_cfg,
-                  logging::logggingInterface& a_log,
-                  std::function< void( const std::string &) >                             &a_log_bg,
-                  std::function< void( const std::string &, const logging::logLevel_t ) > &a_log_level );
+      bool start( mutlib::config                                                          &a_cfg,
+                  logging::log                                                            &a_log,
+                  std::function< void( const std::string &) >                             &a_logbg );
       void stop();
       void wait();
-
-
-
 };

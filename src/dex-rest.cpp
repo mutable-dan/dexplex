@@ -205,9 +205,9 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 /// \brief dexcom_share::start - call private start method async
 /// \return
 ///
-bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync )
+bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync, logging::log &a_log )
 {
-   thread thd( &dexcom_share::_start, this, a_pSync );
+   thread thd( &dexcom_share::_start, this, a_pSync, a_log );
    m_thd = std::move( thd );
    return true;
 }
@@ -216,7 +216,7 @@ bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync )
 ///
 /// \brief dexcom_share::_start - login and get bg values and
 ///
-void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync )
+void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log )
 {
    bool bLoggedIn  = false;
    while( m_bStop == false )
@@ -227,10 +227,18 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync )
          future_status status = thdLogin.wait_for( chrono::seconds( m_nReqTimeout_sec ) );  
          if( status == future_status::timeout )
          {
-            error( "login request timed out" );
+            a_log.logError( "login request timed out" );
             continue; 
          }
          bLoggedIn = thdLogin.get();
+         if( isError() )
+         {
+            for( auto &item : errors() )
+            {
+                a_log.logError( (boost::format( "login %s" ) % item).str() );
+            }
+            clearErrors();
+         }
       }
 
       if( bLoggedIn == true )
@@ -242,13 +250,20 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync )
          if( status == future_status::timeout )
          {
             // thread is stuck, abandon and start again but log so a fix can be found
-            // error( "BG request timed out" ); // make this a callback
+            a_log.logError( "BG request timed out" );
             bLoggedIn = false;  // assume for now that a failure means need to re-loggin
          }
-
          if( thdBG.get() == false )
          {
-            // error( "BG request failed" ); // make this a callback
+             if( isError() )
+             {
+                for( auto &item : errors() )
+                {
+                    // errors from BG request
+                    a_log.logError( (boost::format( "BG request %s" ) % item).str() );
+                }
+                clearErrors();
+             }
             bLoggedIn = false;
          } else
          {
@@ -257,8 +272,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync )
 
       } else
       {
-         // login failedi, wait and try again
-         //error( "login failed" );  // make a callback
+         a_log.logError( "login failed, will try again" );
       }
 
       int32_t nRepeat = m_nShareCheckInterval * 60 / 5;  // number of 5s sleeps
