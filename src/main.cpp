@@ -135,7 +135,7 @@ int main( int argc, char* argv[] )
                 app.runForeground();    // wait for signal, ctrl-c or sig15
                 dsm.stop();
                 dsm.wait();
-                appLog.logInfo( "app threads stopped" );
+                appLog.logInfo( "shut down completing" );
             } else
             {
                 appLog.logError( "failed to start" );
@@ -147,6 +147,7 @@ int main( int argc, char* argv[] )
             {
                 appLog.logDebug( "stdio and srderr not redirected" );
             }
+
             app.runDaemon( false, bDebug );
             appLog.logInfo( (boost::format( "daemon pid:%s" ) % getpid()).str() );
             cout << "daemon" << endl;
@@ -157,6 +158,8 @@ int main( int argc, char* argv[] )
             {
                 appLog.logInfo( "started, main in wait state" );
                 app.wait();  // wait for sig15 issue by stop
+                dsm.stop();
+                dsm.wait();
                 appLog.logInfo( "shut down completing" );
             } else
             {
