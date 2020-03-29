@@ -99,6 +99,7 @@ void dexshareManager::stop()
     m_log.logDebug( "stop issued on dexcom BG reader" );
 }
 
+#include <iostream>
 
 
 ///
@@ -118,14 +119,14 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
     {
         m_sp->wait();   // signaled whenever data is ready
         if( m_bReaderStop == true ) continue;
-        m_log.logDebug( "read bg" );
+        m_log.logDebug( "reader read bg" );
         m_ds.getBG_Reading( vBg );
 
         for( const auto &bg : vBg  )
         {
             a_log_bg( (boost::format( strBgFormat ) % bg.dt % bg.st % bg.wt % bg.bg % static_cast<int32_t>(bg.trend)).str() );
         }
-        m_log.logDebug( "read complete" );
+        m_log.logDebug( "reader read complete" );
     }
     m_log.logDebug( "exit reader" );
 }

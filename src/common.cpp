@@ -25,7 +25,7 @@ void logging::log::setLogger( const std::string &a_strLogName, const std::string
     }
     if( true == (bool)m_pLogger )
     {
-        spdlog::flush_every( std::chrono::seconds(3) );
+        //spdlog::flush_every( std::chrono::seconds(3) );
         m_pLogger->flush_on( spdlog::level::err );
     }
 }
@@ -58,6 +58,7 @@ bool logging::log::_log( const std::string& a_strMessage, const logLevel_t a_Lev
                 m_pLogger->error( a_strMessage );
                 return false;
         }
+        m_pLogger->flush();
         return true;
     }
     return false;

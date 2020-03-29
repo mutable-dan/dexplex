@@ -39,7 +39,7 @@ int main( int argc, char* argv[] )
     appLog.setLevelInfo();  // NOTE: must be set from config
     appLog.setLogger( "daily", "logs/dexplex.log" );                      // app logging
     auto bglog = spdlog::daily_logger_mt( "bg", "logs/bg.log", 0, 0 );   // blood glucose log
-    spdlog::flush_every( std::chrono::seconds(3) );
+    //spdlog::flush_every( std::chrono::seconds(3) );
 
 
     //check if logging is ready else stop
@@ -61,6 +61,7 @@ int main( int argc, char* argv[] )
     auto loggingBG = [&] ( const std::string &a_strMessage ) -> void
     {
         bglog->info( a_strMessage );
+        bglog->flush();
     };
     std::function< void( const std::string& ) > fn_bgLog = loggingBG;
     /////////////////////////////////////////
@@ -131,7 +132,7 @@ int main( int argc, char* argv[] )
             dexshareManager dsm;
             if( true == dsm.start( cfg, appLog, fn_bgLog ) )  // start app, send cfg, applogger and blood glucose callback
             {
-                appLog.logInfo( "waiting" );
+                appLog.logInfo( "started, main in wait state" );
                 app.runForeground();    // wait for signal, ctrl-c or sig15
                 dsm.stop();
                 dsm.wait();
@@ -150,20 +151,24 @@ int main( int argc, char* argv[] )
 
             app.runDaemon( false, bDebug );
             appLog.logInfo( (boost::format( "daemon pid:%s" ) % getpid()).str() );
-            cout << "daemon" << endl;
-
-            // start prog body async
             dexshareManager dsm;
-            if( true == dsm.start( cfg, appLog, fn_bgLog ) )
+            try
             {
-                appLog.logInfo( "started, main in wait state" );
-                app.wait();  // wait for sig15 issue by stop
-                dsm.stop();
-                dsm.wait();
-                appLog.logInfo( "shut down completing" );
-            } else
+                if( true == dsm.start( cfg, appLog, fn_bgLog ) )
+                {
+                    appLog.logInfo( "started, main in wait state" );
+                    app.wait();  // wait for sig15 issue by stop
+                    dsm.stop();
+                    dsm.wait();
+                    appLog.logInfo( "shut down completing" );
+                } else
+                {
+                    appLog.logError( "failed to start" );
+                }
+            } catch( std::exception &e )
             {
-                appLog.logError( "failed to start" );
+                cerr << e.what() << endl;
+                appLog.logInfo( e.what() );
             }
         }
     }
@@ -179,7 +184,7 @@ int main( int argc, char* argv[] )
             display();
         }
 
-    appLog.logInfo( "done" );
+    appLog.logInfo( "shutdown complete" );
     bglog->flush();
     return 0;
 }

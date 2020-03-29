@@ -82,6 +82,7 @@ bool dexcom_share::login()
    m_strSessionId.erase( m_strSessionId.begin() );
    m_strSessionId.erase( m_strSessionId.end()-1 );
    m_bLoggedIn = true;
+
    return true;
 }
 
@@ -182,7 +183,6 @@ bool dexcom_share::dexcomShareData()
 
        m_vReadings.push_back( bg_value );
    }
-
    return true;
 }
 
@@ -194,6 +194,7 @@ bool dexcom_share::dexcomShareData()
 ///
 bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 {
+
    lock_guard<std::mutex> lg( m_muxBG );
    a_vbg = m_vReadings;
    m_vReadings.clear();
@@ -207,22 +208,24 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 ///
 bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync, logging::log &a_log )
 {
+   a_log.logInfo( "dex shared stub called" );
    thread thd( &dexcom_share::_start, this, a_pSync, a_log );
    m_thd = std::move( thd );
    return true;
 }
-
 
 ///
 /// \brief dexcom_share::_start - login and get bg values and
 ///
 void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log )
 {
+   a_log.logInfo( "dex shared started" );
    bool bLoggedIn  = false;
    while( m_bStop == false )
    {
       if( false == bLoggedIn ) 
       {
+         a_log.logInfo( "logging in" );
          auto thdLogin = async( &dexcom_share::login, this );
          future_status status = thdLogin.wait_for( chrono::seconds( m_nReqTimeout_sec ) );  
          if( status == future_status::timeout )
@@ -231,6 +234,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
             continue; 
          }
          bLoggedIn = thdLogin.get();
+         if( true == bLoggedIn ) a_log.logInfo( "logged in" );
          if( isError() )
          {
             for( auto &item : errors() )
@@ -245,6 +249,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
       {
          // get BG
          // check for missing data and ajust
+         a_log.logInfo( "getting BG" );
          auto thdBG = async( &dexcom_share::dexcomShareData, this );
          future_status status = thdBG.wait_for( chrono::seconds( m_nReqTimeout_sec ) );
          if( status == future_status::timeout )
@@ -267,9 +272,9 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
             bLoggedIn = false;
          } else
          {
+             a_log.logInfo( "received BG, signaling reader" );
              a_pSync->signal();
          }
-
       } else
       {
          a_log.logError( "login failed, will try again" );
