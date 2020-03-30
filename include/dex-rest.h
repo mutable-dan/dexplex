@@ -20,6 +20,7 @@
 
 #pragma once
 #include "../include/common.h"
+#include "../include/bg_cache.h"
 #include "../include/loggingInterface.h"
 #include <string>
 #include <optional>
@@ -32,16 +33,8 @@
 class dexcom_share final
 {
    public:
-      using bg_t = struct
-      {
-         uint64_t    dt;    // date as transmistted from dexcom source
-         uint64_t    st;    // system date from dexcom share svr
-         uint64_t    wt;    // don't know
-         int16_t     bg;    // blood glucose
-         char        trend; // Trend  1- "Double Up", 2- "Single UP", 3- "45 Up", 4- "Flat", 5- "45 Down", 6- "Single Down", 7- "Double Down"
-      };
       using returnType = std::optional<std::string>;
-      using vector_BG  = std::vector<bg_t>;
+      using vector_BG  = std::vector<data::bg_data>;
 
    private:
       const std::string        m_strShareUrlbase       = "https://share2.dexcom.com/";

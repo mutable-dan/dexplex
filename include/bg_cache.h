@@ -5,7 +5,7 @@
 #include <boost/circular_buffer.hpp>
 
 
-namespace tools
+namespace data
 {
     // keyed on DT (device date) which is the date from the source whoch collected the value
     // store ST,WT, value, trend
@@ -42,7 +42,7 @@ namespace tools
             void   push( const int64_t a_nDT, const int64_t a_nST, const int64_t a_nWT, const int64_t a_nValue, const int64_t a_nTrend ) noexcept;
             void   push( const bg_data& a_data )  noexcept;
             auto   front()                        noexcept -> std::tuple<bool, bg_data>;
-            auto   front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< tools::bg_data> >;
+            auto   front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< data::bg_data> >;
 
             const bg_buffer_t* data() { return &m_bg_ring; }
     };

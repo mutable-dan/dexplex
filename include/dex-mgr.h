@@ -2,6 +2,7 @@
 
 #include "../include/loggingInterface.h"
 #include "../include/dex-rest.h"
+#include "../include/bg_cache.h"
 #include "../include/common.h"
 
 #include <mutlib/config.h>
@@ -26,6 +27,8 @@ class dexshareManager
       std::atomic_bool      m_bReaderReady    = false;    // is reader ready to recieve bg
       std::atomic_bool      m_bReaderStop     = false;    // stop the reader
       logging::log          m_log;
+      data::bg_cache        m_cache;
+
       std::shared_ptr<sync_tools::monitor> m_sp;          // monitor class used to sync reader with new values from dexcom_share
 
       void reader( std::function< void( const std::string &) > a_log_bg );

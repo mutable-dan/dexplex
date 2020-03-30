@@ -35,12 +35,34 @@ int main( int argc, char* argv[] )
     };
     const char pszConfig[] = "dex.config";
 
+    // read config file
+    mutlib::config cfg;
+    if( !cfg.read( pszConfig ) )
+    {
+        spdlog::error( "error opening config file:%s", pszConfig );
+        return -1;
+    }
+    string strLogPath;
+    if( false == cfg.get( "logpath", strLogPath ) )
+    {
+        strLogPath = "logs/";
+    }
+    string strLogLevel;
+    if( false == cfg.get( "loglevel", strLogLevel ) )
+    {
+        strLogLevel = "info";
+    }
+
+
     logging::log appLog;
     appLog.setLevelInfo();  // NOTE: must be set from config
-    appLog.setLogger( "daily", "logs/dexplex.log" );                      // app logging
-    auto bglog = spdlog::daily_logger_mt( "bg", "logs/bg.log", 0, 0 );   // blood glucose log
-    //spdlog::flush_every( std::chrono::seconds(3) );
+    appLog.setLogger( "daily", strLogPath + "/dexplex.log" );                      // app logging
+    auto bglog = spdlog::daily_logger_mt( "bg", strLogPath + "/bg.log", 0, 0 );   // blood glucose log
 
+    if( strLogLevel == "warn" ) appLog.setLevelWarning();
+    if( strLogLevel == "error" ) appLog.setLevelError();
+    if( strLogLevel == "debug" ) appLog.setLevelDebug();
+    appLog.logInfo( (boost::format( "log level set to %s") % strLogLevel).str() );
 
     //check if logging is ready else stop
     if( false == appLog.isReady() )
@@ -66,14 +88,6 @@ int main( int argc, char* argv[] )
     std::function< void( const std::string& ) > fn_bgLog = loggingBG;
     /////////////////////////////////////////
     // callback done
-
-    // read config file
-    mutlib::config cfg;
-    if( !cfg.read( pszConfig ) )
-    {
-        appLog.logError( (boost::format( "error opening config file:%s" ) % pszConfig).str() );
-        return -1;
-    }
 
     // app start
     appLog.logInfo( "config file read ok" );

@@ -140,7 +140,7 @@ bool dexcom_share::dexcomShareData()
    // protect m_vReadings 
    lock_guard<std::mutex> lg( m_muxBG );
 
-   bg_t bg_value;
+   data::bg_data bg_value;
    for( auto &[key, value] : js_results.items() )
    {
        string  strDt;    
@@ -175,10 +175,10 @@ bool dexcom_share::dexcomShareData()
        strSt.erase( strSt.begin()+cnRemoveMillisec, strSt.end() );
        strWt.erase( strWt.begin()+cnRemoveMillisec, strWt.end() );
 
-       bg_value.dt    = stoll( strDt );
-       bg_value.st    = stoll( strSt );
-       bg_value.wt    = stoll( strWt );
-       bg_value.bg    = nBG;
+       bg_value.DT    = stoll( strDt );
+       bg_value.ST    = stoll( strSt );
+       bg_value.WT    = stoll( strWt );
+       bg_value.value = nBG;
        bg_value.trend = nTrend;
 
        m_vReadings.push_back( bg_value );

@@ -8,7 +8,7 @@ using namespace std;
 /// \brief tools::bg_cache::bg_cache
 /// \param a_nCapacity
 ///
-tools::bg_cache::bg_cache( int32_t a_nCapacity ): m_nCapacity( a_nCapacity )
+data::bg_cache::bg_cache( int32_t a_nCapacity ): m_nCapacity( a_nCapacity )
 {
     m_bg_ring.set_capacity( m_nCapacity );
 }
@@ -22,7 +22,7 @@ tools::bg_cache::bg_cache( int32_t a_nCapacity ): m_nCapacity( a_nCapacity )
 /// \param a_nValue
 /// \param a_nTrend
 ///
-void tools::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int64_t a_nWT, const int64_t a_nValue, const int64_t a_nTrend ) noexcept
+void data::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int64_t a_nWT, const int64_t a_nValue, const int64_t a_nTrend ) noexcept
 {
     bg_data item;
     item.DT    = a_nDT;
@@ -38,7 +38,7 @@ void tools::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int6
 /// \note push one item on, if cap is met, push old one off
 /// \param a_data
 ///
-void tools::bg_cache::push( const bg_data &a_data ) noexcept
+void data::bg_cache::push( const bg_data &a_data ) noexcept
 {
     m_bg_ring.push_front( a_data );
 }
@@ -48,7 +48,7 @@ void tools::bg_cache::push( const bg_data &a_data ) noexcept
 /// \note return most recent item
 /// \return
 ///
-auto tools::bg_cache::front() noexcept -> std::tuple<bool, tools::bg_data>
+auto data::bg_cache::front() noexcept -> std::tuple<bool, data::bg_data>
 {
     if( m_bg_ring.empty() )
     {
@@ -63,9 +63,9 @@ auto tools::bg_cache::front() noexcept -> std::tuple<bool, tools::bg_data>
 /// \param a_nCount
 /// \return
 ///
-auto tools::bg_cache::front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< tools::bg_data> >
+auto data::bg_cache::front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< data::bg_data> >
 {
-    vector< tools::bg_data > vData;
+    vector< data::bg_data > vData;
     if( m_bg_ring.empty() || (a_nCount == 0) )
     {
         return { false, vData };

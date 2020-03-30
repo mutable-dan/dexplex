@@ -79,3 +79,9 @@ namespace sync_tools
     };
 
 }
+
+namespace common
+{
+    std::string& timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime );
+
+}

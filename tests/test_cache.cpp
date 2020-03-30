@@ -8,7 +8,7 @@
 TEST_CASE( "test cache", "[cache]" )
 {
     const int32_t nSize = 4;
-    tools::bg_cache ch( nSize );
+    data::bg_cache ch( nSize );
 
     SECTION( "pushing to container" )
     {

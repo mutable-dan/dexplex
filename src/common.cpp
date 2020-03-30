@@ -1,5 +1,5 @@
 #include "../include/common.h"
-
+#include <time.h>
 
 ///
 /// \brief logging::log::~log
@@ -62,4 +62,22 @@ bool logging::log::_log( const std::string& a_strMessage, const logLevel_t a_Lev
         return true;
     }
     return false;
+}
+
+
+///
+/// \brief common::timeTickToString - convert unix time is nanoseco to date time in ms
+/// \param a_ulTimens
+/// \param a_strDateTime
+/// \return
+///
+std::string& common::timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime )
+{
+    char buff[100];
+    struct tm *ptm_v;
+    a_ulTimens /= 1000;
+    ptm_v = gmtime( static_cast<time_t*>( &a_ulTimens ) );
+    strftime( buff, sizeof(buff), "%A %c",ptm_v );
+    a_strDateTime = buff;
+    return a_strDateTime;
 }

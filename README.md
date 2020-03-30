@@ -53,7 +53,9 @@ account=<your account login>
 password=<account pwd>
 applicationid=<app id>
 httptimeout=20
-
+logpath=...
+loglevel=debug
+# levels avail: info|warn|error|debug
 note: leave out '<' and '>'
 
 
@@ -70,11 +72,12 @@ class to manage rest dexcom calls - in progress
  handle missing data requests
 cache for BG - in progress
  will read from logs at start (if avail)
-write bg to logs and db - done
+write bg to logs - done
+write bg to db 
 manage rest reader and writer - in progress
 notifications of problems- - in progress
 handle more than one user
 encode pwd in config
-handle errors in classes under mgr class
+handle errors in classes under mgr class - done
 
 
