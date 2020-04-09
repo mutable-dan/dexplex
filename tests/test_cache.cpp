@@ -2,8 +2,10 @@
 //#include "catch/catch.hpp"
 #include "../../../catchsi/catch.hpp"
 #include "../include/bg_cache.h"
+#include "../include/common.h"
 
 #include <vector>
+#include <string>
 
 TEST_CASE( "test cache", "[cache]" )
 {
@@ -127,4 +129,29 @@ TEST_CASE( "test cache", "[cache]" )
 
     }
 
+}
+
+
+TEST_CASE( "date tick", "[date]" )
+{
+    SECTION( "convert date tick to string" )
+    {
+        uint64_t dt = 1586450348000;  // seconds in epoc format
+        uint64_t st = 1586464748000;
+        uint64_t wt = 1586464748000;
+        std::string strDateDt;
+        std::string strDateSt;
+        std::string strDateWt;
+        strDateDt = common::timeTickToString( dt, strDateDt );
+        strDateSt = common::timeTickToString( st, strDateSt );
+        strDateWt = common::timeTickToString( wt, strDateWt );
+        INFO( "DT:" << strDateDt );
+        INFO( "ST:" << strDateSt );
+        INFO( "WT:" << strDateWt );
+        REQUIRE( strDateDt == "09/04/2020 16:39:08+0000" );
+        REQUIRE( strDateSt == "09/04/2020 20:39:08+0000" );
+        REQUIRE( strDateWt == "09/04/2020 20:39:08+0000" );
+
+
+    }
 }

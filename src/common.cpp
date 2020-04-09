@@ -1,6 +1,8 @@
 #include "../include/common.h"
 #include <time.h>
 
+using namespace  std;
+
 ///
 /// \brief logging::log::~log
 ///
@@ -71,13 +73,18 @@ bool logging::log::_log( const std::string& a_strMessage, const logLevel_t a_Lev
 /// \param a_strDateTime
 /// \return
 ///
-std::string& common::timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime )
+std::string& common::timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime, const char* a_pszFormat )
 {
+    string strFormat = "%Y-%m-%d %T%z";
+    if( a_pszFormat != nullptr )
+    {
+        strFormat = a_pszFormat;
+    }
     char buff[100];
     struct tm *ptm_v;
     a_ulTimens /= 1000;
     ptm_v = gmtime( static_cast<time_t*>( &a_ulTimens ) );
-    strftime( buff, sizeof(buff), "%A %c",ptm_v );
+    strftime( buff, sizeof(buff), strFormat.c_str(), ptm_v );
     a_strDateTime = buff;
     return a_strDateTime;
 }

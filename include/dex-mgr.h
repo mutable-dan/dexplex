@@ -32,6 +32,7 @@ class dexshareManager
       std::shared_ptr<sync_tools::monitor> m_sp;          // monitor class used to sync reader with new values from dexcom_share
 
       void reader( std::function< void( const std::string &) > a_log_bg );
+//      bool getLog( )
 
     public:
       bool start( mutlib::config                                                          &a_cfg,

@@ -110,7 +110,7 @@ void dexshareManager::stop()
 ///
 void dexshareManager::reader( std::function< void( const std::string &) > a_log_bg  )
 {
-    string strBgFormat = R"(dt:%d,st:%d,wt:%d bg:%d,trend:%d)";
+    string strBgFormat = R"(systime:%s,dt:%d,st:%d,wt:%d,bg:%d,trend:%d)";
     m_log.logInfo( "entering BG reader" );
 
     dexcom_share::vector_BG vBg;
@@ -124,7 +124,9 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
 
         for( const auto &bg : vBg  )
         {
-            a_log_bg( (boost::format( strBgFormat ) % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
+            string strLocalTime;
+            common::timeTickToString( bg.ST, strLocalTime );
+            a_log_bg( (boost::format( strBgFormat ) % strLocalTime % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
             m_cache.push( bg );
         }
         m_log.logDebug( "reader read complete" );
