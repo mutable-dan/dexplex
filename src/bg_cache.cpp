@@ -1,4 +1,5 @@
 #include "../include/bg_cache.h"
+#include <fstream>
 #include <tuple>
 #include <iterator>
 
@@ -83,4 +84,33 @@ auto data::bg_cache::front( const size_t a_nCount ) noexcept -> std::tuple<bool,
     }
 
     return { false, vData };
+}
+
+///
+/// \brief data::bg_cache::cashLoad
+/// \param a_strPath
+/// \note load blood glucose log and put bg data in cache
+bool data::bg_cache::cashLoad( const std::string a_strPath, const cache_param_t &a_processLLogEntry )
+{
+    bool bIsError = false;
+    string strLogfile = logging::find_log_newest( a_strPath );
+    ifstream inf( strLogfile );
+    if( inf.is_open() )
+    {
+        string strLine;
+        while( std::getline( inf, strLine ).eof() == false )
+        {
+            data::bg_data bg;
+            if( true == (bool)a_processLLogEntry )
+            {
+                if( false == a_processLLogEntry( strLine, bg ) )
+                {
+                    bIsError = true;
+                }
+                m_bg_ring.push_front( bg );
+            }
+        }
+    }
+    inf.close();
+    return bIsError? false: true;
 }

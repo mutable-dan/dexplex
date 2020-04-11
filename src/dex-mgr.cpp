@@ -16,7 +16,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
                              logging::log                                &a_log,
                              std::function< void( const std::string &) > &a_logbg )
 {
-    m_log = a_log;
+    m_appLogger = a_log;
 
     string  strAccount;
     string  strPassword;
@@ -52,12 +52,21 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
 
     if( bComplete == false )
     {
-        m_log.logError( (boost::format( "error %s reading config file") % sstr.str()).str() );
+        m_appLogger.logError( (boost::format( "error %s reading config file") % sstr.str()).str() );
         return false;
     }
 
-    m_sp = make_shared<sync_tools::monitor>();   /// moditor for syncing glucose writer and reader
-    m_log.logInfo( "starting reader" );
+    data::cache_param_t fnProcessLine = processCachline;
+    if( false == m_cache.cashLoad( "logs", fnProcessLine ) )
+    {
+        a_log.logWarn( "error loading cache" );
+    } else
+    {
+        a_log.logInfo( "cache loaded" );
+    }
+
+    m_spMonitor = make_shared<sync_tools::monitor>();   /// moditor for syncing glucose writer and reader
+    m_appLogger.logInfo( "starting reader" );
     thread thd( &dexshareManager::reader, this, a_logbg );
     while( m_bReaderReady == false )
     {
@@ -68,8 +77,8 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     m_ds.password( strPassword );
     m_ds.accoundId( strApplicationId );
 
-    m_log.logInfo( "starting dexshare" );
-    m_ds.start( m_sp, m_log );
+    m_appLogger.logInfo( "starting dexshare" );
+    m_ds.start( m_spMonitor, m_appLogger );
     return true;
 }
 
@@ -80,10 +89,10 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
 void dexshareManager::wait()
 {
     m_ds.wait();   // wait for dexcom_share::_start to end
-    m_log.logDebug( "dexshare closing" );
-    m_sp->signal();      // issue a sig to dexshareManager::reader in case in wait
+    m_appLogger.logDebug( "dexshare closing" );
+    m_spMonitor->signal();      // issue a sig to dexshareManager::reader in case in wait
     m_thdReader.join();  // wait for dexshareManager::reader to stop
-    m_log.logDebug( "reader ended" );
+    m_appLogger.logDebug( "reader ended" );
     return;
 }
 
@@ -94,12 +103,10 @@ void dexshareManager::wait()
 void dexshareManager::stop()
 {
     m_ds.stop();  // stop dexcom_share::_start
-    m_log.logDebug( "stop issued on dexcom share BG requester" );
+    m_appLogger.logDebug( "stop issued on dexcom share BG requester" );
     m_bReaderStop = true;   // stop dexshareManager::reader
-    m_log.logDebug( "stop issued on dexcom BG reader" );
+    m_appLogger.logDebug( "stop issued on dexcom BG reader" );
 }
-
-#include <iostream>
 
 
 ///
@@ -111,15 +118,15 @@ void dexshareManager::stop()
 void dexshareManager::reader( std::function< void( const std::string &) > a_log_bg  )
 {
     string strBgFormat = R"(systime:%s,dt:%d,st:%d,wt:%d,bg:%d,trend:%d)";
-    m_log.logInfo( "entering BG reader" );
+    m_appLogger.logInfo( "entering BG reader" );
 
     dexcom_share::vector_BG vBg;
     m_bReaderReady = true;  // not perfect, but good enough sync, monitor start in wait condition
     while( m_bReaderStop == false )
     {
-        m_sp->wait();   // signaled whenever data is ready
+        m_spMonitor->wait();   // signaled whenever data is ready
         if( m_bReaderStop == true ) continue;
-        m_log.logDebug( "reader read bg" );
+        m_appLogger.logDebug( "reader read bg" );
         m_ds.getBG_Reading( vBg );
 
         for( const auto &bg : vBg  )
@@ -129,7 +136,7 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
             a_log_bg( (boost::format( strBgFormat ) % strLocalTime % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
             m_cache.push( bg );
         }
-        m_log.logDebug( "reader read complete" );
+        m_appLogger.logDebug( "reader read complete" );
     }
-    m_log.logDebug( "exit reader" );
+    m_appLogger.logDebug( "exit reader" );
 }

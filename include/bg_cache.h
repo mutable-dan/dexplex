@@ -1,12 +1,14 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include <cinttypes>
 #include <boost/circular_buffer.hpp>
-
+#include "../include/common.h"
 
 namespace data
 {
+
     // keyed on DT (device date) which is the date from the source whoch collected the value
     // store ST,WT, value, trend
     class bg_data
@@ -27,7 +29,8 @@ namespace data
 
     };
 
-    using bg_buffer_t = boost::circular_buffer<bg_data>;
+    using bg_buffer_t   = boost::circular_buffer<bg_data>;
+    using cache_param_t = std::function< bool( const std::string &, data::bg_data &) >;
 
     class bg_cache
     {
@@ -45,6 +48,8 @@ namespace data
             auto   front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< data::bg_data> >;
 
             const bg_buffer_t* data() { return &m_bg_ring; }
+
+            bool cashLoad( const std::string a_strPath, const cache_param_t &a_processLLogEntry );
     };
 
 }

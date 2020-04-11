@@ -44,6 +44,8 @@ namespace logging
             bool isReady()         override { return (bool)m_pLogger;         }
     };
 
+    std::string find_log_newest( const std::string &a_strPath );
+
 }
 
 

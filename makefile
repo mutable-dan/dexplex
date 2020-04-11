@@ -6,7 +6,7 @@ INCLUDE_DIR = -I. -I../cpr/include/ -I../json/include/ -I../spdlog/include/
 
 EXE      = dexplex
 SOURCE   = src/main.cpp src/dex-rest.cpp src/dex-mgr.cpp src/bg_cache.cpp src/common.cpp
-LINKLIBS = -L/usr/lib/libdaemon/ -L../cpr/lib/ -lspdlog -lcpr -lcurl -ldaemon -lmut -lpthread 
+LINKLIBS = -L/usr/lib/libdaemon/ -L../cpr/lib/ -lspdlog -lcpr -lcurl -ldaemon -lmut -lstdc++fs -lboost_date_time -lpthread 
 
 OBJS     = $(SOURCE:.cpp=.o) 
 DEPS     = $(SOURCE:.cpp=.d) 
