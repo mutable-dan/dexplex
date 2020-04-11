@@ -70,8 +70,8 @@ class to manage rest dexcom calls - in progress
  has to handle re-login  - in progress
  handle when to request new data based on system time of last received
  handle missing data requests
-cache for BG - in progress
- will read from logs at start (if avail)
+cache for BG - done
+ will read from logs at start (if avail) - almost done
 write bg to logs - done
 write bg to db 
 manage rest reader and writer - in progress
@@ -79,5 +79,7 @@ notifications of problems- - in progress
 handle more than one user
 encode pwd in config
 handle errors in classes under mgr class - done
+set next read absed on last read date (5 min interval)
+look into what happends when last log entry is the next one read (ie restart less than 5 min after last read)
 
 
