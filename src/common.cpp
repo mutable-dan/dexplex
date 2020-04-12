@@ -98,40 +98,25 @@ std::string& common::timeTickToString( int64_t a_ulTimens, std::string &a_strDat
 
 ///
 /// \brief common::dexcomNextReadDelay
-/// \note spanLastRead = current time - lastRead
-///       mintoNext = 5min - spanLastRead
+/// \note get last display time and add 5 minutes to get the next expected time
+///       expectedtime - currenttime -> seconds to next read, then pad with a few seconds
 /// \param a_ulSystemTime
 /// \return
 ///
-auto common::secondsToNextRead( uint64_t a_ulSystemTime ) -> std::tuple<uint64_t, std::string, std::string>
+auto common::secondsToNextRead( uint64_t a_ulDispTime ) -> std::tuple<uint64_t, std::string, std::string>
 {
     // dt:1586621356000 milli sec timestamp
     // dt:1586621356 sec timestamp
     //dt::date  dt( a_ulSystemTime/1000 );
     pt::ptime ptCurrentTime( pt::second_clock::local_time() );
-    pt::ptime ptLastRead( pt::from_time_t( a_ulSystemTime/1000 ) );
-    pt::time_duration spanLastRead = ptCurrentTime - ptLastRead;
-    //    string str;
-    //    str = pt::to_iso_extended_string( ptCurrentTime );
-    //    str = pt::to_iso_extended_string( ptLastRead );
-    //    str = std::to_string( spanLastRead.hours() );
-    //    str = std::to_string( spanLastRead.minutes() );
-    //    str = std::to_string( spanLastRead.seconds() );
-    //    str = std::to_string( spanLastRead.total_seconds() );
-    //    (void)str;
+    pt::ptime ptLastRead( pt::from_time_t( a_ulDispTime/1000 ) );
 
-    pt::time_duration timeToNext;
-    if( spanLastRead > pt::minutes( 5 ) )
-    {
-        // if it's been more than 5 minutes, time to read
-        timeToNext = pt::seconds( 30 );
-    } else
-    {
-        // less than or equal to 5 minutes, find the diff
-        timeToNext = pt::minutes( 5 ) - spanLastRead + pt::seconds( 10 ); // pad a few seconds to give dexcom a chance
-    }
+    pt::ptime nextExPectedReadTime = ptLastRead + pt::minutes( 5 );   // last disp read + 5min
+    pt::time_duration secToNextRead = nextExPectedReadTime - ptCurrentTime;
+    secToNextRead += pt::seconds( 10 );
+    (void)nextExPectedReadTime;
 
-    return std::make_tuple( timeToNext.total_seconds(), pt::to_iso_extended_string( ptCurrentTime ), pt::to_iso_extended_string( ptLastRead ) );
+    return std::make_tuple( secToNextRead.total_seconds(), pt::to_iso_extended_string( ptCurrentTime ), pt::to_iso_extended_string( ptLastRead ) );
 }
 
 ///

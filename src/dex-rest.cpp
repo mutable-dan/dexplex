@@ -141,7 +141,7 @@ auto dexcom_share::dexcomShareData()
    lock_guard<std::mutex> lg( m_muxBG );
 
    data::bg_data bg_value;
-   uint64_t ulLastSysdate = 0;
+   uint64_t ulLastDispDate = 0;
    for( auto &[key, value] : js_results.items() )
    {
        string  strDt;    
@@ -181,11 +181,11 @@ auto dexcom_share::dexcomShareData()
        bg_value.WT    = stoll( strWt );
        bg_value.value = nBG;
        bg_value.trend = nTrend;
-       ulLastSysdate = bg_value.DT;
+       ulLastDispDate = bg_value.DT;
 
        m_vReadings.push_back( bg_value );
    }
-   return std::make_tuple( true, ulLastSysdate );
+   return std::make_tuple( true, ulLastDispDate );
 }
 
 
@@ -223,6 +223,8 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
 {
    a_log.logInfo( "dex shared started" );
    bool bLoggedIn  = false;
+   uint64_t ulLastDispDate = 0;
+
    while( m_bStop == false )
    {
       if( false == bLoggedIn ) 
@@ -261,10 +263,19 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
             a_log.logError( "BG request timed out" );
             bLoggedIn = false;  // assume for now that a failure means need to re-loggin
          }
-         auto [bRes, ulLastSysDate] = thdBG.get();
-         auto [secondsToNextRead_tmp, strCurrentTime, strLastReadTime] = common::secondsToNextRead( ulLastSysDate );
-         secondsToNextRead = secondsToNextRead_tmp;
-         a_log.logInfo( (boost::format( "current time:%s, displaytime:%s, seconds to next read:%d" ) % strCurrentTime % strLastReadTime % secondsToNextRead).str() );
+         auto [bRes, ulDispDate] = thdBG.get();
+         // if new disp date then calc next read time, else pause and read again
+         if( (ulLastDispDate != ulDispDate) )
+         {
+             ulLastDispDate = ulDispDate;
+             auto [secondsToNextRead_tmp, strCurrentTime, strLastReadTime] = common::secondsToNextRead( ulDispDate );
+             secondsToNextRead = secondsToNextRead_tmp;
+             a_log.logInfo( (boost::format( "new reading: current time:%s, displaytime:%s, seconds to next read:%d" ) % strCurrentTime % strLastReadTime % secondsToNextRead).str() );
+         } else
+         {
+             secondsToNextRead = 15;
+             a_log.logInfo( (boost::format( "no reading: seconds to next read:%d" ) % secondsToNextRead).str() );
+         }
 
          if( bRes == false )
          {
@@ -288,7 +299,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
          a_log.logError( "login failed, will try again" );
       }
 
-      int32_t nRepeat = secondsToNextRead / 5;  // number of 5s sleeps
+      int32_t nRepeat = (secondsToNextRead / 5) + (secondsToNextRead % 5);  // number of 5s sleeps
       while( --nRepeat > 0 )
       {
          this_thread::sleep_for( chrono::seconds( 5 ) );
