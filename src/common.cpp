@@ -1,11 +1,14 @@
 #include "../include/common.h"
 #include <time.h>
-#include <boost/date_time/gregorian/gregorian.hpp>
 #include <filesystem>
+#include <tuple>
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace  std;
 namespace fs = std::filesystem;
 namespace dt = boost::gregorian;
+namespace pt = boost::posix_time;
 
 ///
 /// \brief logging::log::~log
@@ -79,7 +82,7 @@ bool logging::log::_log( const std::string& a_strMessage, const logLevel_t a_Lev
 ///
 std::string& common::timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime, const char* a_pszFormat )
 {
-    string strFormat = "%Y-%m-%d %T%z";
+    string strFormat = "%Y-%m-%dT%T%z";
     if( a_pszFormat != nullptr )
     {
         strFormat = a_pszFormat;
@@ -91,6 +94,44 @@ std::string& common::timeTickToString( int64_t a_ulTimens, std::string &a_strDat
     strftime( buff, sizeof(buff), strFormat.c_str(), ptm_v );
     a_strDateTime = buff;
     return a_strDateTime;
+}
+
+///
+/// \brief common::dexcomNextReadDelay
+/// \note spanLastRead = current time - lastRead
+///       mintoNext = 5min - spanLastRead
+/// \param a_ulSystemTime
+/// \return
+///
+auto common::secondsToNextRead( uint64_t a_ulSystemTime ) -> std::tuple<uint64_t, std::string, std::string>
+{
+    // dt:1586621356000 milli sec timestamp
+    // dt:1586621356 sec timestamp
+    //dt::date  dt( a_ulSystemTime/1000 );
+    pt::ptime ptCurrentTime( pt::second_clock::local_time() );
+    pt::ptime ptLastRead( pt::from_time_t( a_ulSystemTime/1000 ) );
+    pt::time_duration spanLastRead = ptCurrentTime - ptLastRead;
+    //    string str;
+    //    str = pt::to_iso_extended_string( ptCurrentTime );
+    //    str = pt::to_iso_extended_string( ptLastRead );
+    //    str = std::to_string( spanLastRead.hours() );
+    //    str = std::to_string( spanLastRead.minutes() );
+    //    str = std::to_string( spanLastRead.seconds() );
+    //    str = std::to_string( spanLastRead.total_seconds() );
+    //    (void)str;
+
+    pt::time_duration timeToNext;
+    if( spanLastRead > pt::minutes( 5 ) )
+    {
+        // if it's been more than 5 minutes, time to read
+        timeToNext = pt::seconds( 30 );
+    } else
+    {
+        // less than or equal to 5 minutes, find the diff
+        timeToNext = pt::minutes( 5 ) - spanLastRead + pt::seconds( 10 ); // pad a few seconds to give dexcom a chance
+    }
+
+    return std::make_tuple( timeToNext.total_seconds(), pt::to_iso_extended_string( ptCurrentTime ), pt::to_iso_extended_string( ptLastRead ) );
 }
 
 ///

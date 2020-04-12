@@ -92,11 +92,11 @@ bool dexcom_share::login()
 /// \brief dexcom_share::dexcomShareData, get blood glucose (bg) value, use session id
 /// \return
 ///
-bool dexcom_share::dexcomShareData()
+auto dexcom_share::dexcomShareData()
 {
    if( (m_bLoggedIn == false) || (m_strSessionId.length() == 0) )
    {
-      return false;
+      return std::make_tuple( false, 0LU );
    }
    string strUrl      = m_strShareUrlbase + m_strShareGetBG;
    string strMinues   = std::to_string( m_nMinutes );
@@ -115,14 +115,14 @@ bool dexcom_share::dexcomShareData()
       stringstream sstrErr;
       sstrErr << "error posting:" << response.text << ", BG reading failed" << e.what();
       error( sstrErr.str() );
-      return false;
+      return std::make_tuple( false, 0LU );
    }
    if( response.status_code != m_cnHttpOk )
    {
       stringstream sstrErr;
       sstrErr << "error posting:" << response.status_code << ", " << response.text << ", reading failed";
       error( sstrErr.str() );
-      return false;
+      return std::make_tuple( false, 0LU );
    }
 
    nlohmann::json js_results;
@@ -134,13 +134,14 @@ bool dexcom_share::dexcomShareData()
       stringstream sstrErr;
       sstrErr << "error parsing to json:" << response.text << ", bg reading failed" << pe.what();
       error( sstrErr.str() );
-      return false;
+      return std::make_tuple( false, 0LU );
    }
 
    // protect m_vReadings 
    lock_guard<std::mutex> lg( m_muxBG );
 
    data::bg_data bg_value;
+   uint64_t ulLastSysdate = 0;
    for( auto &[key, value] : js_results.items() )
    {
        string  strDt;    
@@ -180,10 +181,11 @@ bool dexcom_share::dexcomShareData()
        bg_value.WT    = stoll( strWt );
        bg_value.value = nBG;
        bg_value.trend = nTrend;
+       ulLastSysdate = bg_value.DT;
 
        m_vReadings.push_back( bg_value );
    }
-   return true;
+   return std::make_tuple( true, ulLastSysdate );
 }
 
 
@@ -245,6 +247,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
          }
       }
 
+      uint64_t secondsToNextRead;
       if( bLoggedIn == true )
       {
          // get BG
@@ -258,7 +261,12 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
             a_log.logError( "BG request timed out" );
             bLoggedIn = false;  // assume for now that a failure means need to re-loggin
          }
-         if( thdBG.get() == false )
+         auto [bRes, ulLastSysDate] = thdBG.get();
+         auto [secondsToNextRead_tmp, strCurrentTime, strLastReadTime] = common::secondsToNextRead( ulLastSysDate );
+         secondsToNextRead = secondsToNextRead_tmp;
+         a_log.logInfo( (boost::format( "current time:%s, displaytime:%s, seconds to next read:%d" ) % strCurrentTime % strLastReadTime % secondsToNextRead).str() );
+
+         if( bRes == false )
          {
              if( isError() )
              {
@@ -280,7 +288,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
          a_log.logError( "login failed, will try again" );
       }
 
-      int32_t nRepeat = m_nShareCheckInterval * 60 / 5;  // number of 5s sleeps
+      int32_t nRepeat = secondsToNextRead / 5;  // number of 5s sleeps
       while( --nRepeat > 0 )
       {
          this_thread::sleep_for( chrono::seconds( 5 ) );

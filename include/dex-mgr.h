@@ -46,40 +46,40 @@ class dexshareManager
 const auto processCachline = [] ( const std::string &a_strLine, data::bg_data &a_bgData ) -> bool
 {
     // sample string
-    // [2020-04-10 20:11:22.209] [bg] [info] systime:2020-04-11 00:09:12+0000,dt:1586549352000,st:1586563752000,wt:1586563752000,bg:118,trend:4
+    // [2020-04-11 13:48:10.597] [bg] [info] systime:2020-04-11 17:44:16+0000,displaytime:2020-04-11 13:44:16+0000,dt:1586612656000,st:1586627056000,wt:1586627056000,bg:97,trend:4
     // dt:1586452448000,st:1586466848000,wt:1586466848000,bg:99,trend:4
 
     try
     {
-    const uint32_t cnStart = 71;
-    std::string strSubLine = a_strLine.substr( cnStart );
-    mutlib::splitString ss1;
-    ss1.split( strSubLine, "," );
-    std::string strDt = ss1[0];
-    std::string strSt = ss1[1];
-    std::string strWt = ss1[2];
-    std::string strBg = ss1[3];
-    std::string strTr = ss1[4];
-    mutlib::splitString ss2;
-    ss2.split( strDt, ":" );
-    a_bgData.DT = std::stoll( ss2[1] );
-    ss2.clear();
+        const uint32_t cnStart = 108;
+        std::string strSubLine = a_strLine.substr( cnStart );
+        mutlib::splitString ss1;
+        ss1.split( strSubLine, "," );
+        std::string strDt = ss1[0];
+        std::string strSt = ss1[1];
+        std::string strWt = ss1[2];
+        std::string strBg = ss1[3];
+        std::string strTr = ss1[4];
+        mutlib::splitString ss2;
+        ss2.split( strDt, ":" );
+        a_bgData.DT = std::stoll( ss2[1] );
+        ss2.clear();
 
-    ss2.split( strSt, ":" );
-    a_bgData.ST = std::stoll( ss2[1] );
-    ss2.clear();
+        ss2.split( strSt, ":" );
+        a_bgData.ST = std::stoll( ss2[1] );
+        ss2.clear();
 
-    ss2.split( strWt, ":" );
-    a_bgData.WT = std::stoll( ss2[1] );
-    ss2.clear();
+        ss2.split( strWt, ":" );
+        a_bgData.WT = std::stoll( ss2[1] );
+        ss2.clear();
 
-    ss2.split( strBg, ":" );
-    a_bgData.value = std::stoll( ss2[1] );
-    ss2.clear();
+        ss2.split( strBg, ":" );
+        a_bgData.value = std::stoll( ss2[1] );
+        ss2.clear();
 
-    ss2.split( strTr, ":" );
-    a_bgData.trend = std::stoll( ss2[1] );
-    ss2.clear();
+        ss2.split( strTr, ":" );
+        a_bgData.trend = std::stoll( ss2[1] );
+        ss2.clear();
     } catch( ... )
     {
         memset( (void*)&a_bgData, 0, sizeof(data::bg_data) );

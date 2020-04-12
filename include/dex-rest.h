@@ -73,7 +73,7 @@ class dexcom_share final
 
 
       bool login();
-      bool dexcomShareData();
+      auto dexcomShareData();
       void _start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log );
       void error( const std::string &a_strError ) { m_errorList.push_back( a_strError ); }
       void error( const char* a_pszError  )       { m_errorList.push_back( a_pszError ); }
