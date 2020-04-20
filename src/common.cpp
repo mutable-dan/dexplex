@@ -108,8 +108,8 @@ auto common::secondsToNextRead( uint64_t a_ulDispTime ) -> std::tuple<uint64_t, 
     // dt:1586621356000 milli sec timestamp
     // dt:1586621356 sec timestamp
     //dt::date  dt( a_ulSystemTime/1000 );
-    //pt::ptime ptCurrentTime( pt::second_clock::local_time() );
-    pt::ptime ptCurrentTime( pt::second_clock::universal_time() );
+    pt::ptime ptCurrentTime( pt::second_clock::local_time() );
+    // pt::ptime ptCurrentTime( pt::second_clock::universal_time() );
     pt::ptime ptLastRead( pt::from_time_t( a_ulDispTime/1000 ) );
 
     pt::ptime nextExPectedReadTime = ptLastRead + pt::minutes( 5 );   // last disp read + 5min
