@@ -116,6 +116,14 @@ auto common::secondsToNextRead( uint64_t a_ulDispTime ) -> std::tuple<uint64_t, 
     pt::time_duration secToNextRead = nextExPectedReadTime - ptCurrentTime;
     secToNextRead += pt::seconds( 10 );
 
+    #ifndef NDEBUG
+        string strValue;
+        strValue = pt::to_iso_extended_string( ptCurrentTime );
+        strValue = pt::to_iso_extended_string( ptLastRead );
+        strValue = pt::to_iso_extended_string( nextExPectedReadTime );
+        (void)strValue;
+    #endif
+
     // handle error from svr where date becomes 1970
     if( (secToNextRead.total_seconds() > 600) || (secToNextRead.total_seconds() < 0 ) )
     {
