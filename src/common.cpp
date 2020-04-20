@@ -108,13 +108,19 @@ auto common::secondsToNextRead( uint64_t a_ulDispTime ) -> std::tuple<uint64_t, 
     // dt:1586621356000 milli sec timestamp
     // dt:1586621356 sec timestamp
     //dt::date  dt( a_ulSystemTime/1000 );
-    pt::ptime ptCurrentTime( pt::second_clock::local_time() );
+    //pt::ptime ptCurrentTime( pt::second_clock::local_time() );
+    pt::ptime ptCurrentTime( pt::second_clock::universal_time() );
     pt::ptime ptLastRead( pt::from_time_t( a_ulDispTime/1000 ) );
 
     pt::ptime nextExPectedReadTime = ptLastRead + pt::minutes( 5 );   // last disp read + 5min
     pt::time_duration secToNextRead = nextExPectedReadTime - ptCurrentTime;
     secToNextRead += pt::seconds( 10 );
-    (void)nextExPectedReadTime;
+
+    // handle error from svr where date becomes 1970
+    if( (secToNextRead.total_seconds() > 600) || (secToNextRead.total_seconds() < 0 ) )
+    {
+        secToNextRead = pt::seconds( 20 );
+    }
 
     return std::make_tuple( secToNextRead.total_seconds(), pt::to_iso_extended_string( ptCurrentTime ), pt::to_iso_extended_string( ptLastRead ) );
 }

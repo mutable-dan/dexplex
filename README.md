@@ -47,6 +47,10 @@ There are a few things about the nighscout server that I didn't like, so this pr
 
   https://github.com/gabime/spdlog
 
+  hostsetup
+  -------------
+  set locat time -> ex ln -s /usr/share/zoneinfo/America/New_York /etc/localtime
+
 sample config
 -----------------------
 account=<your account login>

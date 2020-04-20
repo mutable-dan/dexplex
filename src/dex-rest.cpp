@@ -45,7 +45,7 @@ bool dexcom_share::login()
    } catch( nlohmann::json::parse_error &pe )
    {
       stringstream sstrErr;
-      sstrErr << "error parsing to json:" << sstr.str() << ", login failed" << pe.what();
+      sstrErr << "login parse - error parsing to json:" << sstr.str() << ", login failed" << pe.what();
       error( sstrErr.str() );
       return false;
    }
@@ -63,7 +63,7 @@ bool dexcom_share::login()
    } catch( std::exception &e )
    {
       stringstream sstrErr;
-      sstrErr << "error posting:" << sstr.str() << ", reading failed" << e.what();
+      sstrErr << "login post - error posting:" << sstr.str() << ", reading failed" << e.what();
       error( sstrErr.str() );
       return false;
    }
@@ -72,7 +72,7 @@ bool dexcom_share::login()
    if( (m_nLoginStatusCode != m_cnHttpOk) )
    {
       stringstream sstrErr;
-      sstrErr << "error posting:" << response.status_code << ", " << response.text << ", reading failed";
+      sstrErr << "login error code - error posting:" << response.status_code << ", " << response.text << ", reading failed";
       error( sstrErr.str() );
       return false;
    }
@@ -113,14 +113,14 @@ auto dexcom_share::dexcomShareData()
    } catch( std::exception &e )
    {
       stringstream sstrErr;
-      sstrErr << "error posting:" << response.text << ", BG reading failed" << e.what();
+      sstrErr << "bg request - error posting:" << response.text << ", BG reading failed" << e.what();
       error( sstrErr.str() );
       return std::make_tuple( false, 0LU );
    }
    if( response.status_code != m_cnHttpOk )
    {
       stringstream sstrErr;
-      sstrErr << "error posting:" << response.status_code << ", " << response.text << ", reading failed";
+      sstrErr << "bg error code - error:" << response.status_code << ", " << response.text << ", reading failed";
       error( sstrErr.str() );
       return std::make_tuple( false, 0LU );
    }
@@ -132,7 +132,7 @@ auto dexcom_share::dexcomShareData()
    } catch( nlohmann::json::parse_error &pe )
    {
       stringstream sstrErr;
-      sstrErr << "error parsing to json:" << response.text << ", bg reading failed" << pe.what();
+      sstrErr << "bg parse - error parsing to json:" << response.text << ", bg reading failed" << pe.what();
       error( sstrErr.str() );
       return std::make_tuple( false, 0LU );
    }
@@ -160,7 +160,7 @@ auto dexcom_share::dexcomShareData()
        } catch( std::exception &e )
        {
           stringstream sstr;
-          sstr << "bad avlue" << value;
+          sstr << "bg bad value" << value;
           error( sstr.str() );
           continue;
        }
