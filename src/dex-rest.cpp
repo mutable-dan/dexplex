@@ -126,6 +126,8 @@ auto dexcom_share::dexcomShareData()
    }
 
    nlohmann::json js_results;
+   // sample response
+   // "[{\"DT\":\"\\/Date(1587664805000+0000)\\/\",\"ST\":\"\\/Date(1587679205000)\\/\",\"Trend\":5,\"Value\":74,\"WT\":\"\\/Date(1587679205000)\\/\"}]"
    try
    {
       js_results = nlohmann::json::parse( response.text );
@@ -297,6 +299,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
       } else
       {
          a_log.logError( "login failed, will try again" );
+         secondsToNextRead = 20;
       }
 
       int32_t nRepeat = (secondsToNextRead / 5) + (secondsToNextRead % 5);  // number of 5s sleeps
