@@ -131,11 +131,6 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
 
         for( const auto &bg : vBg  )
         {
-            string strSystemTime;
-            string strDisplayTime;
-            common::timeTickToString( bg.ST, strSystemTime );
-            common::timeTickToString( bg.DT, strDisplayTime );
-            a_log_bg( (boost::format( strBgFormat ) % strSystemTime % strDisplayTime % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
             auto [bRes, prevValue] = m_cache.front();
             if( bRes == true )
             {
@@ -145,6 +140,11 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
                     continue;
                 }
             }
+            string strSystemTime;
+            string strDisplayTime;
+            common::timeTickToString( bg.ST, strSystemTime );
+            common::timeTickToString( bg.DT, strDisplayTime );
+            a_log_bg( (boost::format( strBgFormat ) % strSystemTime % strDisplayTime % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
             m_cache.push( bg );
         }
         m_appLogger.logDebug( "reader read complete" );
