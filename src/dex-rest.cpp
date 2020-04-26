@@ -17,7 +17,7 @@
 
 
 using namespace std;
-
+namespace json = nlohmann;
 
 ///
 /// \brief dexcom_share::login
@@ -125,13 +125,13 @@ auto dexcom_share::dexcomShareData()
       return std::make_tuple( false, 0LU );
    }
 
-   nlohmann::json js_results;
+   json::json js_results;
    // sample response
    // "[{\"DT\":\"\\/Date(1587664805000+0000)\\/\",\"ST\":\"\\/Date(1587679205000)\\/\",\"Trend\":5,\"Value\":74,\"WT\":\"\\/Date(1587679205000)\\/\"}]"
    try
    {
-      js_results = nlohmann::json::parse( response.text );
-   } catch( nlohmann::json::parse_error &pe )
+      js_results = json::json::parse( response.text );
+   } catch( json::json::parse_error &pe )
    {
       stringstream sstrErr;
       sstrErr << "bg parse - error parsing to json:" << response.text << ", bg reading failed" << pe.what();

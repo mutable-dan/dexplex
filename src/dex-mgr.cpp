@@ -136,6 +136,15 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
             common::timeTickToString( bg.ST, strSystemTime );
             common::timeTickToString( bg.DT, strDisplayTime );
             a_log_bg( (boost::format( strBgFormat ) % strSystemTime % strDisplayTime % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
+            auto [bRes, prevValue] = m_cache.front();
+            if( bRes == true )
+            {
+                if( bg.DT == prevValue.DT )
+                {
+                    m_appLogger.logWarn( "BG has not updated since last reading, duplicate" );
+                    continue;
+                }
+            }
             m_cache.push( bg );
         }
         m_appLogger.logDebug( "reader read complete" );

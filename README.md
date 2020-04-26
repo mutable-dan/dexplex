@@ -22,7 +22,7 @@ There are a few things about the nighscout server that I didn't like, so this pr
 
   cpr
   ----------------------------------
-  rest lib
+  rest lib sending
      https://github.com/whoshuu/cpr
      https://github.com/whoshuu/cpr.git
      cd cpr && git submodule update --init --recursive
@@ -32,13 +32,18 @@ There are a few things about the nighscout server that I didn't like, so this pr
      mkdir build && cd build
      cmake ..
      make
-     
-
      export LD_LIBRARY_PATH=../cpr/lib/
+     
+    rest lib server
+    -------------------
+        apt install librestbed-dev
+
+
 
   json lib
   -------------------------------------
   https://github.com/nlohmann/json
+
 
 
   logging
@@ -65,25 +70,25 @@ note: leave out '<' and '>'
 
 TODO
 ------------------------------------
-get login working - done
-get BG call working - done
-basic logging - done
-basic read config - done
-class to manage rest dexcom calls - in progress
+* get login working - done
+* get BG call working - done
+* basic logging - done
+* basic read config - done
+* class to manage rest dexcom calls - done
  has to handle errors - in progress
- has to handle re-login  - in progress
+*  has to handle re-login  - done - not tested
  handle when to request new data based on system time of last received
  handle missing data requests
-cache for BG - done
- will read from logs at start (if avail) - almost done
-write bg to logs - done
+* cache for BG - done
+* will read from logs at start (if avail) - done
+* write bg to logs - done
 write bg to db 
-manage rest reader and writer - in progress
-notifications of problems- - in progress
+* manage rest reader and writer - done
+* notifications of problems- - done
 handle more than one user
 encode pwd in config
-handle errors in classes under mgr class - done
-set next read absed on last read date (5 min interval)
-look into what happends when last log entry is the next one read (ie restart less than 5 min after last read)
+* handle errors in classes under mgr class - done
+* set next read absed on last read date (5 min interval) - done
+* look into what happends when last log entry is the next one read (ie restart less than 5 min after last read) - done
 
 

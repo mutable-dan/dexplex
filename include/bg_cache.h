@@ -24,8 +24,8 @@ namespace data
             bool operator<= ( const bg_data& a_rhs )   { return DT <= a_rhs.DT; }
             bool operator>  ( const bg_data& a_rhs )   { return DT >  a_rhs.DT; }
             bool operator>= ( const bg_data& a_rhs )   { return DT >= a_rhs.DT; }
-            bool operator== ( const bg_data& a_rhs )   { return DT == a_rhs.DT; }
-            bool operator!= ( const bg_data& a_rhs )   { return DT != a_rhs.DT; }
+            bool operator== ( const bg_data& a_rhs )   { if( (DT == a_rhs.DT) && (ST == a_rhs.ST) && (WT == a_rhs.WT) && (value == a_rhs.value) && (trend == a_rhs.trend) ) return true; else return false; }
+            bool operator!= ( const bg_data& a_rhs )   { return !(*this == a_rhs); }
 
     };
 
@@ -50,6 +50,7 @@ namespace data
             const bg_buffer_t* data() { return &m_bg_ring; }
 
             bool cashLoad( const std::string a_strPath, const cache_param_t &a_processLLogEntry );
+
     };
 
 }
