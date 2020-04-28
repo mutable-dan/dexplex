@@ -4,6 +4,7 @@
 #include "../include/dex-rest.h"
 #include "../include/bg_cache.h"
 #include "../include/common.h"
+#include "../include/restServer.h"
 
 #include <mutlib/config.h>
 #include <mutlib/util.h>
@@ -23,12 +24,16 @@
 class dexshareManager
 {
    private:
-      dexcom_share          m_ds;
-      std::thread           m_thdReader;
-      std::atomic_bool      m_bReaderReady    = false;    // is reader ready to recieve bg
-      std::atomic_bool      m_bReaderStop     = false;    // stop the reader
-      logging::log          m_appLogger;
-      data::bg_cache        m_cache;
+      dexcom_share                  m_ds;
+      restServer::restHttpServer    m_rest;
+
+      std::thread                   m_thdReader;
+      std::thread                   m_thdRestServer;
+
+      std::atomic_bool              m_bReaderReady    = false;    // is reader ready to recieve bg
+      std::atomic_bool              m_bReaderStop     = false;    // stop the reader
+      logging::log                  m_appLogger;
+      data::bg_cache                m_cache;
 
       std::shared_ptr<sync_tools::monitor> m_spMonitor;          // monitor class used to sync reader with new values from dexcom_share
 

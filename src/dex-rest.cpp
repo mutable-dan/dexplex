@@ -210,11 +210,11 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 /// \brief dexcom_share::start - call private start method async
 /// \return
 ///
-bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync, logging::log &a_log )
+bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log )
 {
    a_log.logInfo( "dex shared stub called" );
    thread thd( &dexcom_share::_start, this, a_pSync, a_log );
-   m_thd = std::move( thd );
+   m_thdDexcomShare = std::move( thd );
    return true;
 }
 

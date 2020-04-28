@@ -37,7 +37,9 @@ class dexcom_share final
       using vector_BG  = std::vector<data::bg_data>;
 
    private:
-      const std::string        m_strShareUrlbase       = "https://share2.dexcom.com/";
+//      const std::string        m_strShareUrlbase       = "https://share2.dexcom.com/";
+//        const std::string        m_strShareUrlbase       = "http://10.162.181.8:8080/";
+        const std::string        m_strShareUrlbase       = "http://127.0.0.1:8080/";
       const std::string        m_strShareLogin         = "ShareWebServices/Services/General/LoginPublisherAccountByName";
       const std::string        m_strShareGetBG         = "ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues";
 
@@ -69,8 +71,7 @@ class dexcom_share final
       // start thread
       std::atomic_bool         m_bStop                 = false;
       std::atomic_bool         m_bIsDataAvail          = false;  // set to false when read by parent, set to true when new data is avail from dexcom
-      std::thread              m_thd;
-
+      std::thread              m_thdDexcomShare;
 
       bool login();
       auto dexcomShareData();
@@ -90,9 +91,9 @@ class dexcom_share final
 
       bool getBG_Reading( vector_BG& a_vBg );
 
-      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log &a_log );
+      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log );
       void stop()           { m_bStop = true; }
-      void wait()           { if( m_thd.joinable() == true ) m_thd.join(); }
+      void wait()           { if( m_thdDexcomShare.joinable() == true ) m_thdDexcomShare.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }
       
       bool isError() const{ return m_errorList.size() > 0; }

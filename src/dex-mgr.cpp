@@ -1,8 +1,10 @@
 #include "../include/dex-mgr.h"
+#include "../../json/include/nlohmann/json.hpp"
 
 #include <boost/format.hpp>
 
 using namespace std;
+using json = nlohmann::json;
 
 
 ///
@@ -79,6 +81,10 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
 
     m_appLogger.logInfo( "starting dexshare" );
     m_ds.start( m_spMonitor, m_appLogger );
+
+    //thread thdRest( &restServer::restHttpServer::startRestServer, &m_rest, 80, m_appLogger );
+    //m_thdRestServer = std::move( thdRest );
+
     return true;
 }
 
@@ -151,3 +157,5 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
     }
     m_appLogger.logDebug( "exit reader" );
 }
+
+

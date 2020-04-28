@@ -91,4 +91,7 @@ encode pwd in config
 * set next read absed on last read date (5 min interval) - done
 * look into what happends when last log entry is the next one read (ie restart less than 5 min after last read) - done
 
+* look into error when sending a_log as a ref
+void _start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log );
+
 
