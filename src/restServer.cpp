@@ -1,6 +1,8 @@
 #include "../include/restServer.h"
 
 #include <memory>
+#include <thread>
+#include <chrono>
 
 #include "./../json/include/nlohmann/json.hpp"
 
@@ -195,7 +197,7 @@ namespace restServer
 
 
 
-void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, logging::log& a_log )
+void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, logging::log a_log )
 {
     (void)a_log;
     auto entry = make_shared< rest::Resource >( );
@@ -220,8 +222,9 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, loggi
    m_service.publish( dexLogin );
    m_service.publish( dexBg );
    m_service.start( settings );
-
+   a_log.logInfo( "rest http server stopping" );
 }
+
 
 
 void restServer::restHttpServer::stopRestServer()

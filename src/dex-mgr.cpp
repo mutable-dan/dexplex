@@ -82,8 +82,8 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     m_appLogger.logInfo( "starting dexshare" );
     m_ds.start( m_spMonitor, m_appLogger );
 
-    //thread thdRest( &restServer::restHttpServer::startRestServer, &m_rest, 80, m_appLogger );
-    //m_thdRestServer = std::move( thdRest );
+    thread thdRest( &restServer::restHttpServer::startRestServer, &m_rest, 80, m_appLogger );
+    m_thdRestServer = std::move( thdRest );
 
     return true;
 }
@@ -99,6 +99,8 @@ void dexshareManager::wait()
     m_spMonitor->signal();      // issue a sig to dexshareManager::reader in case in wait
     m_thdReader.join();  // wait for dexshareManager::reader to stop
     m_appLogger.logDebug( "reader ended" );
+    m_thdRestServer.join();
+    m_appLogger.logDebug( "rest server ended" );
     return;
 }
 
@@ -108,6 +110,7 @@ void dexshareManager::wait()
 ///
 void dexshareManager::stop()
 {
+    m_rest.stopRestServer();
     m_ds.stop();  // stop dexcom_share::_start
     m_appLogger.logDebug( "stop issued on dexcom share BG requester" );
     m_bReaderStop = true;   // stop dexshareManager::reader

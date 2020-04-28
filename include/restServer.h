@@ -5,8 +5,6 @@
 #include <string>
 #include <set>
 
-
-
 #undef DEBUG
 #include <restbed>
 
@@ -25,9 +23,8 @@ namespace restServer
             const std::string m_strDexShareBgValue =  "/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues";
             resource_t        m_setNighScout       =  { "/api/v1/entries.json", "api/v1/entries", "api/v1/entries/sgv", "api/v1/entries/{id: [a-z]}" };
 
-
         public:
-            void startRestServer( const uint16_t a_unPort, logging::log &a_log );
+            void startRestServer( const uint16_t a_unPort, logging::log a_log );
             void stopRestServer();
             void getGlucose( uint32_t a_nNumberOfEvents );
 
