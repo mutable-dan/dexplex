@@ -34,9 +34,9 @@ There are a few things about the nighscout server that I didn't like, so this pr
      make
      export LD_LIBRARY_PATH=../cpr/lib/
      
-    rest lib server
-    -------------------
-        apt install librestbed-dev
+  rest lib server
+  -------------------
+    apt install librestbed-dev
 
 
 
@@ -49,8 +49,7 @@ There are a few things about the nighscout server that I didn't like, so this pr
   logging
   -------------------------------------
   spdlog - not using hdr only to reduce compile time
-
-  https://github.com/gabime/spdlog
+    https://github.com/gabime/spdlog
 
   hostsetup
   -------------
