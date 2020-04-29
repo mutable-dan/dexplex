@@ -198,7 +198,6 @@ namespace restServer
                         common::timeTickToString( item.DT, strST );
                         json jsItem =
                         {
-                            {
                                 { "sgv",        item.value    },
                                 { "date",       item.DT       },
                                 { "dateString", strDT.c_str() },
@@ -208,9 +207,8 @@ namespace restServer
                                 { "type",       "sgv"         },
                                 { "utcOffset",  0             },
                                 { "sysTime",    strST.c_str() }
-                            }
                         };
-                        js.insert( js.end(), jsItem.begin(), jsItem.end() );
+                        js.push_back( jsItem );
                     }
                 }
             }
