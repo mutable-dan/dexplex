@@ -15,6 +15,8 @@
 #include <sstream>
 #include <string.h>
 
+#include <chrono>
+
 //
 // start and manage rest client
 // start and manage writers

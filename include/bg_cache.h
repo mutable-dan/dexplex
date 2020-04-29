@@ -1,10 +1,11 @@
 #pragma once
+#include "../include/common.h"
 
 #include <vector>
 #include <functional>
+#include <mutex>
 #include <cinttypes>
 #include <boost/circular_buffer.hpp>
-#include "../include/common.h"
 
 namespace data
 {
@@ -37,6 +38,8 @@ namespace data
         private:
             bg_buffer_t m_bg_ring;
             int32_t     m_nCapacity;    // capacity is defaulted to 1 day of data where data arrives every 5 minutes
+
+            mutable std::mutex  m_mux;
         public:
             bg_cache( int32_t a_nCapacity = 288 );
             size_t size() const noexcept { return m_bg_ring.size(); }

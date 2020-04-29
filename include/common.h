@@ -86,4 +86,5 @@ namespace common
 {
     std::string& timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime, const char* a_pszFormat = nullptr );
     auto         secondsToNextRead( uint64_t a_ulSystemTime ) -> std::tuple<uint64_t, std::string, std::string>;
+    bool         dropPrivleges( const uint16_t a_newPriv );
 }

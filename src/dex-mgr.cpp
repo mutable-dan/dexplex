@@ -82,7 +82,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     m_appLogger.logInfo( "starting dexshare" );
     m_ds.start( m_spMonitor, m_appLogger );
 
-    thread thdRest( &restServer::restHttpServer::startRestServer, &m_rest, 80, m_appLogger );
+    thread thdRest( &restServer::restHttpServer::startRestServer, &m_rest, 80, &m_cache, m_appLogger );
     m_thdRestServer = std::move( thdRest );
 
     return true;

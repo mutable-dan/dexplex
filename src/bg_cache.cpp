@@ -31,6 +31,8 @@ void data::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int64
     item.WT    = a_nWT;
     item.value = a_nValue;
     item.trend = a_nTrend;
+
+    lock_guard<std::mutex> lock( m_mux );
     m_bg_ring.push_front( item );
 }
 
@@ -41,6 +43,7 @@ void data::bg_cache::push( const int64_t a_nDT, const int64_t a_nST, const int64
 ///
 void data::bg_cache::push( const bg_data &a_data ) noexcept
 {
+    lock_guard<std::mutex> lock( m_mux );
     m_bg_ring.push_front( a_data );
 }
 
@@ -51,6 +54,7 @@ void data::bg_cache::push( const bg_data &a_data ) noexcept
 ///
 auto data::bg_cache::front() noexcept -> std::tuple<bool, data::bg_data>
 {
+    lock_guard<std::mutex> lock( m_mux );
     if( m_bg_ring.empty() )
     {
         return { false, bg_data() };
@@ -67,6 +71,7 @@ auto data::bg_cache::front() noexcept -> std::tuple<bool, data::bg_data>
 auto data::bg_cache::front( const size_t a_nCount ) noexcept -> std::tuple<bool, std::vector< data::bg_data> >
 {
     vector< data::bg_data > vData;
+    lock_guard<std::mutex> lock( m_mux );
     if( m_bg_ring.empty() || (a_nCount == 0) )
     {
         return { false, vData };
@@ -82,7 +87,6 @@ auto data::bg_cache::front( const size_t a_nCount ) noexcept -> std::tuple<bool,
         }
         return std::make_tuple( true, vData );
     }
-
     return { false, vData };
 }
 
@@ -98,6 +102,7 @@ bool data::bg_cache::cashLoad( const std::string a_strPath, const cache_param_t 
     if( inf.is_open() )
     {
         string strLine;
+        lock_guard<std::mutex> lock( m_mux );
         while( std::getline( inf, strLine ).eof() == false )
         {
             data::bg_data bg;

@@ -14,7 +14,7 @@ using namespace std;
 
 namespace restServer
 {
-    void entry_handler( const std::shared_ptr< rest::Session > session );
+    //void entry_handler( const std::shared_ptr< rest::Session > session );
     void post_login   ( const shared_ptr< rest::Session > session );
     void post_bg      ( const shared_ptr< rest::Session > session );
 
@@ -112,7 +112,7 @@ namespace restServer
     /// \param session
     /// \note nighscout glucose api
     ///
-    void entry_handler( const shared_ptr< rest::Session > session )
+    void restServer::restHttpServer::entry_handler( const shared_ptr< rest::Session > session )
     {
         // api-secret
         const auto request = session->get_request( );
@@ -155,37 +155,94 @@ namespace restServer
         };
         session->fetch( nContent_length, fn );
 
+        // expected output
+        //    [
+        //        {
+        //            "date": 1588125626000,
+        //            "dateString": "2020-04-29T02:00:26.000Z",
+        //            "device": "share2",
+        //            "direction": "Flat",
+        //            "sgv": 123,
+        //            "sysTime": "2020-04-27T03:10:18.000Z",
+        //            "trend": 4,
+        //            "type": "sgv",
+        //            "utcOffset": 0
+        //        },
+        //        {
+        //            "date": 1588125927000,
+        //            "dateString": "2020-04-29T02:05:26.000Z",
+        //            "device": "share2",
+        //            "direction": "Flat",
+        //            "sgv": 125,
+        //            "sysTime": "2020-04-27T03:05:18.000Z",
+        //            "trend": 4,
+        //            "type": "sgv",
+        //            "utcOffset": 0
+        //        }
+        //    ]
+
 
         json js;
         if( path == "/api/v1/entries.json")
         {
-            js =
+            if( m_pCache->verify_request( nCount ) )
             {
+                auto [bOk, vItem ] = m_pCache->front( nCount );
+                if( bOk == true )
                 {
-                    {"_id", "5ea64d3504b8fc0ad8e8cf56"},
-                    {"sgv", 123},
-                    {"date", 1587957018000},
-                    {"dateString", "2020-04-27T03:10:18.000Z"},
-                    {"trend", 4},
-                    {"direction", "Flat"},
-                    {"device", "share2"},
-                    {"type", "sgv"},
-                    {"utcOffset", 0},
-                    {"sysTime", "2020-04-27T03:10:18.000Z"}
-                },
-                {
-                    {"_id", "5ea64c0904b8fc0ad8e8c860"},
-                    {"sgv", 125},
-                    {"date", 1587956718000},
-                    {"dateString", "2020-04-27T03:05:18.000Z"},
-                    {"trend", 4},
-                    {"direction", "Flat"},
-                    {"device", "share2"},
-                    {"type", "sgv"},
-                    {"utcOffset", 0},
-                    {"sysTime", "2020-04-27T03:05:18.000Z"}
+                    for( auto item : vItem )
+                    {
+                        string strDT;
+                        string strST;
+                        common::timeTickToString( item.DT, strDT );
+                        common::timeTickToString( item.DT, strST );
+                        json jsItem =
+                        {
+                            {
+                                { "sgv",        item.value    },
+                                { "date",       item.DT       },
+                                { "dateString", strDT.c_str() },
+                                { "trend",      item.trend    },
+                                { "direction",  "Flat"        },
+                                { "device",     "share2"      },
+                                { "type",       "sgv"         },
+                                { "utcOffset",  0             },
+                                { "sysTime",    strST.c_str() }
+                            }
+                        };
+                        js.insert( js.end(), jsItem.begin(), jsItem.end() );
+                    }
                 }
-            };
+            }
+
+
+            //                        js =
+            //                        {
+            //                            {
+            //            //                    {"_id", "5ea64d3504b8fc0ad8e8cf56"},
+            //                                {"sgv", 123},
+            //                                {"date", 1588125626000},
+            //                                {"dateString", "2020-04-29T02:00:26.000Z"},
+            //                                {"trend", 4},
+            //                                {"direction", "Flat"},
+            //                                {"device", "share2"},
+            //                                {"type", "sgv"},
+            //                                {"utcOffset", 0},
+            //                                {"sysTime", "2020-04-27T03:10:18.000Z"}
+            //                            },
+            //                            {
+            //            //                    {"_id", "5ea64c0904b8fc0ad8e8c860"},
+            //                                {"sgv", 125},
+            //                                {"date", 1588125927000},
+            //                                {"dateString", "2020-04-29T02:05:26.000Z"},
+            //                                {"trend", 4},
+            //                                {"direction", "Flat"},
+            //                                {"device", "share2"},
+            //                                {"type", "sgv"},
+            //                                {"utcOffset", 0},
+            //                                {"sysTime", "2020-04-27T03:05:18.000Z"}
+            //                            }
+            //                        };
         } else
         {
             js = { {{ "DT", "Date(1587665105000+0000)" }, { "ST", "Date(1587665105000+0000)" }, {"Trend", 5}, {"Value", 74}, {"WT", "Date(1587665105000+0000)"}} };
@@ -197,13 +254,23 @@ namespace restServer
 
 
 
-void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, logging::log a_log )
+void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data::bg_cache *a_pCache, logging::log a_log )
 {
-    (void)a_log;
+    m_pCache = a_pCache;
+    if( m_pCache == nullptr )
+    {
+        a_log.logError( "invalid cache, rest service failed" );
+        return;
+    }
+
+    auto fn = [=]( const std::shared_ptr<rest::Session> a_sess ) -> void
+    {
+        this->entry_handler( a_sess );
+    };
     auto entry = make_shared< rest::Resource >( );
     entry->set_paths( m_setNighScout );
-    entry->set_method_handler( "GET", entry_handler );
-    entry->set_method_handler( "POST", entry_handler );
+    entry->set_method_handler( "GET", fn );
+    entry->set_method_handler( "POST", fn );
 
     auto dexLogin = make_shared< rest::Resource >( );
     dexLogin->set_path( m_strDexShareLogin );
@@ -214,15 +281,15 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, loggi
     dexBg->set_method_handler( "POST", post_bg );
 
 
-   auto settings = make_shared< rest::Settings >( );
-   settings->set_port(  a_unPort );
-   settings->set_default_header( "Connection", "close" );
+    auto settings = make_shared< rest::Settings >( );
+    settings->set_port(  a_unPort );
+    settings->set_default_header( "Connection", "close" );
 
-   m_service.publish( entry );
-   m_service.publish( dexLogin );
-   m_service.publish( dexBg );
-   m_service.start( settings );
-   a_log.logInfo( "rest http server stopping" );
+    m_service.publish( entry );
+    //m_service.publish( dexLogin );
+    //m_service.publish( dexBg );
+    m_service.start( settings );
+    a_log.logInfo( "rest http server stopping" );
 }
 
 

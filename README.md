@@ -36,6 +36,7 @@ There are a few things about the nighscout server that I didn't like, so this pr
      
   rest lib server
   -------------------
+    https://github.com/Corvusoft/restbed/
     apt install librestbed-dev
 
 
@@ -43,7 +44,7 @@ There are a few things about the nighscout server that I didn't like, so this pr
   json lib
   -------------------------------------
   https://github.com/nlohmann/json
-
+  https://nlohmann.github.io/json/
 
 
   logging
@@ -65,6 +66,18 @@ logpath=...
 loglevel=debug
 # levels avail: info|warn|error|debug
 note: leave out '<' and '>'
+
+sample test query
+-----------------------
+ curl  "http://127.0.0.1//api/v1/entries.json?count=83&rr=1587921452717" -H  "accept: application/json"| python3 -m json.tool
+ count is number of most recent data points to collect
+ rr - ??
+
+
+
+nightscout info
+-------------------------
+https://github.com/nightscout/cgm-remote-monitor#nightscout-api
 
 
 TODO

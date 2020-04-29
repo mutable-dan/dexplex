@@ -73,6 +73,45 @@ bool logging::log::_log( const std::string& a_strMessage, const logLevel_t a_Lev
     return false;
 }
 
+///
+/// \brief logging::find_log_newest
+/// \note does not account for two files with same date because it should not be possible unless renamed
+/// \param a_strPath
+/// \return
+///
+std::string logging::find_log_newest( const std::string &a_strPath )
+{
+    dt::date dte_newest;
+    fs::path path = a_strPath;
+    fs::path path_newest;
+    for( auto &entry : fs::directory_iterator( path ) )
+    {
+        if( entry.is_regular_file() )
+        {
+            string strFn = entry.path().filename().stem();
+            if( strFn.substr( 0, 3 ) == "bg_" )
+            {
+                string strDatePart = strFn.substr( 3 );
+                dt::date d( dt::from_simple_string( strDatePart ) );
+                if( dte_newest.is_not_a_date() )
+                {
+                    dte_newest = d;
+                    path_newest = entry.path();
+                } else
+                {
+                    if( (d > dte_newest) && (entry.file_size() > 0) )
+                    {
+                        dte_newest = d;
+                        path_newest = entry.path();
+                    }
+                }
+            }
+        }
+    }
+    //return to_iso_extended_string( path.s );
+    return path_newest.string();
+}
+
 
 ///
 /// \brief common::timeTickToString - convert unix time is nanoseco to date time in ms
@@ -133,41 +172,34 @@ auto common::secondsToNextRead( uint64_t a_ulDispTime ) -> std::tuple<uint64_t, 
     return std::make_tuple( secToNextRead.total_seconds(), pt::to_iso_extended_string( ptCurrentTime ), pt::to_iso_extended_string( ptLastRead ) );
 }
 
+
 ///
-/// \brief logging::find_log_newest
-/// \note does not account for two files with same date because it should not be possible unless renamed
-/// \param a_strPath
+/// \brief common::dropPrivleges drop root and use new
+/// \note or use authbind
+/// \param a_newPriv
 /// \return
 ///
-std::string logging::find_log_newest( const std::string &a_strPath )
+bool common::dropPrivleges( const uint16_t a_newPriv )
 {
-    dt::date dte_newest;
-    fs::path path = a_strPath;
-    fs::path path_newest;
-    for( auto &entry : fs::directory_iterator( path ) )
+
+    auto gid = getgid();
+    auto uid = getuid();
+    if( (gid ==0) && (uid == 0) )
     {
-        if( entry.is_regular_file() )
+        if (setgid( a_newPriv ) == -1)
         {
-            string strFn = entry.path().filename().stem();
-            if( strFn.substr( 0, 3 ) == "bg_" )
-            {
-                string strDatePart = strFn.substr( 3 );
-                dt::date d( dt::from_simple_string( strDatePart ) );
-                if( dte_newest.is_not_a_date() )
-                {
-                    dte_newest = d;
-                    path_newest = entry.path();
-                } else
-                {
-                    if( (d > dte_newest) && (entry.file_size() > 0) )
-                    {
-                        dte_newest = d;
-                        path_newest = entry.path();
-                    }
-                }
-            }
+            /* handle error condition */
+            return false;
         }
+        if (setuid( a_newPriv ) == -1)
+        {
+            /* handle error condition */
+            return false;
+        }
+        return true;
+    } else
+    {
+        return false;
     }
-    //return to_iso_extended_string( path.s );
-    return path_newest.string();
+
 }
