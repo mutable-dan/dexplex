@@ -1,8 +1,13 @@
 #include "../include/restServer.h"
 
+#include <iostream>
+#include <filesystem>
+#include <map>
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <fstream>
+#include <sstream>
 #include <boost/format.hpp>
 
 #include "./../json/include/nlohmann/json.hpp"
@@ -105,6 +110,37 @@ namespace restServer
            return;
        };
        session->fetch( nContent_length, fn );
+    }
+
+    ///
+    /// \brief restServer::restHttpServer::cert
+    /// \param session
+    /// \note .well-known/acme-challenge/token
+    /// \example curl  "http://127.0.0.1/.well-known/acme-challenge/token
+    void restServer::restHttpServer::cert_challenge( const shared_ptr< rest::Session > session )
+    {
+        const auto request = session->get_request( );
+        if( request->get_method() == "GET" )
+        {
+            string strFilename = request->get_path();
+            strFilename.erase( 0, 1 );
+            ifstream inf( "./" + strFilename, ifstream::in );
+            if( inf.is_open() )
+            {
+                stringstream sstr;
+                sstr << inf.rdbuf();
+
+                const multimap< string, string > headers
+                {
+                    { "Content-Type", "text/html" },
+                    { "Content-Length", ::to_string( sstr.str().length( ) ) }
+                };
+                session->close( rest::OK, sstr.str(), headers );
+            } else
+            {
+                session->close( rest::NOT_FOUND );
+            }
+        }
     }
 
     ///
@@ -236,11 +272,17 @@ namespace restServer
 
 
 
-
-void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data::bg_cache *a_pCache, logging::log *a_pLog )
+///
+/// \brief restServer::restHttpServer::startRestServer
+/// \param a_unPort
+/// \param a_pCache
+/// \param a_pLog
+///
+void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, mutlib::config *a_pConfig, data::bg_cache *a_pCache, logging::log *a_pLog )
 {
     m_pCache = a_pCache;
     m_pLog   = a_pLog;
+    m_pConfig= a_pConfig;
     if( m_pCache == nullptr )
     {
         a_pLog->logError( "invalid cache, rest service failed" );
@@ -251,15 +293,35 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data:
         fprintf( stdout, "invalid log, rest service failed\n" );
         return;
     }
+    if( m_pConfig == nullptr )
+    {
+        fprintf( stdout, "invalid config, rest service failed\n" );
+        return;
+    }
 
-    auto fn = [=]( const std::shared_ptr<rest::Session> a_sess ) -> void
+    auto fnEntry = [=]( const std::shared_ptr<rest::Session> a_sess ) -> void
     {
         this->entry_handler( a_sess );
     };
+    auto fnCert = [=]( const std::shared_ptr<rest::Session> a_sess ) -> void
+    {
+        this->cert_challenge( a_sess );
+    };
+    auto fnNotfound = [=]( const std::shared_ptr<rest::Session> a_sess ) -> void
+    {
+        const auto request = a_sess->get_request();
+        string strPath = request->get_path();
+        cout << strPath << endl;
+    };
+
     auto entry = make_shared< rest::Resource >( );
     entry->set_paths( m_setNighScout );
-    entry->set_method_handler( "GET", fn );
-    entry->set_method_handler( "POST", fn );
+    entry->set_method_handler( "GET", fnEntry );
+    entry->set_method_handler( "POST", fnEntry );
+
+    auto getCert = make_shared< rest::Resource >( );
+    getCert->set_path( m_strChallenge );
+    getCert->set_method_handler( "GET", fnCert );
 
     auto dexLogin = make_shared< rest::Resource >( );
     dexLogin->set_path( m_strDexShareLogin );
@@ -271,10 +333,29 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data:
 
 
     auto settings = make_shared< rest::Settings >( );
+
+    string strPrivKey;
+    string strCert;
+    m_pConfig->get( "privKeyPath", strPrivKey );
+    m_pConfig->get( "certPath", strCert );
+    filesystem::path privKeyPath( strPrivKey );
+    filesystem::path certPath( strCert );
+    if( filesystem::exists( privKeyPath ) && filesystem::exists( certPath ) )
+    {
+        auto ssl_settings = make_shared< rest::SSLSettings >( );
+        ssl_settings->set_http_disabled( true );
+        ssl_settings->set_private_key( rest::Uri( privKeyPath.c_str() ) );
+        ssl_settings->set_certificate( rest::Uri( certPath.c_str() ) );
+        ssl_settings->set_temporary_diffie_hellman( rest::Uri( "file:///tmp/dh768.pem" ) );
+        settings->set_ssl_settings( ssl_settings );
+    }
+
     settings->set_port(  a_unPort );
     settings->set_default_header( "Connection", "close" );
 
+    m_service.set_not_found_handler( fnNotfound );
     m_service.publish( entry );
+    m_service.publish( getCert );
     //m_service.publish( dexLogin );
     //m_service.publish( dexBg );
     m_service.start( settings );
@@ -282,7 +363,9 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data:
 }
 
 
-
+///
+/// \brief restServer::restHttpServer::stopRestServer
+///
 void restServer::restHttpServer::stopRestServer()
 {
     m_service.stop();

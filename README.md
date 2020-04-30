@@ -75,11 +75,17 @@ sample test query
 
 
 
-nightscout info
+nightscout and other info
 -------------------------
 https://github.com/nightscout/cgm-remote-monitor#nightscout-api
 https://github.com/nightscout/cgm-remote-monitor/wiki/API-v1.0.0-beta-Security
 http://www.nightscout.info/wiki/labs/interpreting-raw-dexcom-data
+https://github.com/nightscout/share2nightscout-bridge/blob/master/index.js
+https://www.hanselman.com/blog/BridgingDexcomShareCGMReceiversAndNightscout.aspx
+https://github.com/NightscoutFoundation/xDrip/issues/830        api secret
+https://github.com/NightscoutFoundation/xDrip/blob/f96119cf4a7911e4fef62bc510a45481ba7467d2/app/src/main/java/com/eveningoutpost/dexdrip/cgm/nsfollow/utils/NightscoutUrl.java#L83  code for url builder
+https://github.com/nightscout/share2nightscout-bridge/blob/master/index.js code for secret
+
 
 xDrip+
 -------------------------
