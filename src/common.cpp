@@ -73,6 +73,33 @@ bool logging::log::_log( const std::string& a_strMessage, const logLevel_t a_Lev
     return false;
 }
 
+void logging::log::setLevel()
+{
+    switch( m_logLevel )
+    {
+        case logging::LOG_TYPE::INFO:
+            m_pLogger->set_level(  spdlog::level::info );
+            break;
+
+        case logging::LOG_TYPE::WARN:
+            m_pLogger->set_level(  spdlog::level::warn );
+            break;
+
+        case logging::LOG_TYPE::ERROR:
+            m_pLogger->set_level(  spdlog::level::err );
+            break;
+
+        case logging::LOG_TYPE::VERBOSE:
+            m_pLogger->set_level(  spdlog::level::debug );
+            break;
+
+        default:
+            m_pLogger->set_level(  spdlog::level::info );
+            break;
+    }
+
+}
+
 ///
 /// \brief logging::find_log_newest
 /// \note does not account for two files with same date because it should not be possible unless renamed
@@ -121,12 +148,14 @@ std::string logging::find_log_newest( const std::string &a_strPath )
 ///
 std::string& common::timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime, const char* a_pszFormat )
 {
+    // How do I construct an ISO 8601 datetime in C++
+    // https://stackoverflow.com/questions/9527960/how-do-i-construct-an-iso-8601-datetime-in-c
     string strFormat = "%Y-%m-%dT%T%z";
     if( a_pszFormat != nullptr )
     {
         strFormat = a_pszFormat;
     }
-    char buff[100];
+    char buff[ sizeof("YYYY-MM-DDTHH:mm:ss.sssZ")*2 ];
     struct tm *ptm_v;
     a_ulTimens /= 1000;
     ptm_v = gmtime( static_cast<time_t*>( &a_ulTimens ) );

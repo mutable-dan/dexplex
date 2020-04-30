@@ -1,6 +1,7 @@
 #pragma once
 #include "../include/common.h"
 
+#include <string>
 #include <vector>
 #include <functional>
 #include <mutex>
@@ -15,11 +16,16 @@ namespace data
     class bg_data
     {
         public:
-            int64_t DT    = 0;
-            int64_t ST    = 0;
-            int64_t WT    = 0;
-            int16_t value = 0;
-            int16_t trend = 0;
+            int64_t DT    = 0; // disp time
+            int64_t ST    = 0; // sys time
+            int64_t WT    = 0; // ??
+            int64_t DTz   = 0; // timezone offset
+
+            std::string strDT;
+            std::string strST;
+            std::string strWT;
+            int16_t     value = 0;
+            int16_t     trend = 0;
         public:
             bool operator<  ( const bg_data& a_rhs )   { return DT <  a_rhs.DT; }
             bool operator<= ( const bg_data& a_rhs )   { return DT <= a_rhs.DT; }

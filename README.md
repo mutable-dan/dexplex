@@ -78,6 +78,11 @@ sample test query
 nightscout info
 -------------------------
 https://github.com/nightscout/cgm-remote-monitor#nightscout-api
+https://github.com/nightscout/cgm-remote-monitor/wiki/API-v1.0.0-beta-Security
+http://www.nightscout.info/wiki/labs/interpreting-raw-dexcom-data
+
+xDrip+
+-------------------------
 
 
 TODO

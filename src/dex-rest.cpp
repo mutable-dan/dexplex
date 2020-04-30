@@ -99,7 +99,7 @@ auto dexcom_share::dexcomShareData()
       return std::make_tuple( false, 0LU );
    }
    string strUrl      = m_strShareUrlbase + m_strShareGetBG;
-   string strMinues   = std::to_string( m_nMinutes );
+   string strMinutes   = std::to_string( m_nMinutes );
    string strMaxCount = std::to_string( m_nMaxCount );
 
    cpr::Response response;
@@ -107,7 +107,7 @@ auto dexcom_share::dexcomShareData()
    {
       response = cpr::Post( 
             cpr::Url{ strUrl }, 
-            cpr::Parameters{ { "sessionId", m_strSessionId  }, { "minutes", strMinues }, { "maxcount", strMaxCount } },
+            cpr::Parameters{ { "sessionId", m_strSessionId  }, { "minutes", strMinutes }, { "maxcount", strMaxCount } },
             cpr::Body( "" )  // without body, content-length is not sent
             );
    } catch( std::exception &e )
@@ -173,14 +173,21 @@ auto dexcom_share::dexcomShareData()
        strSt.erase( strSt.begin(), strSt.begin()+cnRemoveDate );
        strWt.erase( strWt.begin(), strWt.begin()+cnRemoveDate );
        
-       const int32_t cnRemoveMillisec = 13;
-       strDt.erase( strDt.begin()+cnRemoveMillisec, strDt.end() );
-       strSt.erase( strSt.begin()+cnRemoveMillisec, strSt.end() );
-       strWt.erase( strWt.begin()+cnRemoveMillisec, strWt.end() );
+       const int32_t cnRemoveMillisec   = 13;
+       const int32_t cnRemoveMillisecDT = 18;
+       strDt.erase( strDt.begin()+cnRemoveMillisecDT, strDt.end() );
+       strSt.erase( strSt.begin()+cnRemoveMillisec,   strSt.end() );
+       strWt.erase( strWt.begin()+cnRemoveMillisec,   strWt.end() );
 
+       string strDtZone = strDt.substr( strDt.length()-5, 5 );
+
+       bg_value.strDT = strDt;
+       bg_value.strST = strSt;
+       bg_value.strWT = strWt;
        bg_value.DT    = stoll( strDt );
        bg_value.ST    = stoll( strSt );
        bg_value.WT    = stoll( strWt );
+       bg_value.DTz   = stoll( strDtZone );
        bg_value.value = nBG;
        bg_value.trend = nTrend;
        ulLastDispDate = bg_value.DT;

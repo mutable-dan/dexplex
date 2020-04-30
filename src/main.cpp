@@ -55,14 +55,30 @@ int main( int argc, char* argv[] )
 
 
     logging::log appLog;
-    appLog.setLevelInfo();  // NOTE: must be set from config
-    appLog.setLogger( "daily", strLogPath + "/dexplex.log" );                      // app logging
     auto bglog = spdlog::daily_logger_mt( "bg", strLogPath + "/bg.log", 0, 0 );   // blood glucose log
+    appLog.setLogger( "daily", strLogPath + "/dexplex.log" );                      // app logging
 
-    if( strLogLevel == "warn" ) appLog.setLevelWarning();
-    if( strLogLevel == "error" ) appLog.setLevelError();
-    if( strLogLevel == "debug" ) appLog.setLevelDebug();
-    appLog.logInfo( (boost::format( "log level set to %s") % strLogLevel).str() );
+    appLog.setLevelInfo();  // NOTE: must be set from config
+    appLog.logInfo( "********* starting service *********" );
+    appLog.logInfo( (boost::format( "config log level requested %s") % strLogLevel).str() );
+
+    // set log level from config
+    if( strLogLevel == "warn"  )
+    {
+        appLog.setLevelWarning();
+        appLog.logInfo( "Log level set to warn" );
+    }
+    if( strLogLevel == "error" )
+    {
+        appLog.setLevelError();
+        appLog.logInfo( "Log level set to error" );
+    }
+    if( strLogLevel == "debug" )
+    {
+        appLog.setLevelDebug();
+        appLog.logInfo( "Log level set to debug" );
+    }
+    // *******************
 
     //check if logging is ready else stop
     if( false == appLog.isReady() )

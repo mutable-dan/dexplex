@@ -3,6 +3,7 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <boost/format.hpp>
 
 #include "./../json/include/nlohmann/json.hpp"
 
@@ -14,7 +15,6 @@ using namespace std;
 
 namespace restServer
 {
-    //void entry_handler( const std::shared_ptr< rest::Session > session );
     void post_login   ( const shared_ptr< rest::Session > session );
     void post_bg      ( const shared_ptr< rest::Session > session );
 
@@ -111,14 +111,17 @@ namespace restServer
     /// \brief entry_handler
     /// \param session
     /// \note nighscout glucose api
-    ///
+    /// \test curl  "http://127.0.0.1/api/v1/entries.json?count=1&rr=1587961452708" -H  "accept: application/json"| python3 -m json.tool
     void restServer::restHttpServer::entry_handler( const shared_ptr< rest::Session > session )
     {
         // api-secret
         const auto request = session->get_request( );
         auto headers = request->get_headers( );
-        auto method = request->get_method();
+        auto method = request->get_method();  // ex http
         auto path = request->get_path();
+        m_pLog->logInfo( (boost::format( "entry_handler: request *** new %s %s %s %s %s:%s" ) %
+                          request->get_host() % method % request->get_version() % request->get_protocol() %
+                          request->get_path() % request->get_port()).str()  );
 
         int nContent_length = 0;
         string strHeader;
@@ -132,15 +135,15 @@ namespace restServer
         }
         int32_t nCount = 1;
 
-        auto fn = [&method, &request, &nCount]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
+        auto fn = [&request, &nCount, this]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
         {
             auto headers = request->get_headers( );
             auto queryParams = request->get_query_parameters();  // multimap<string>
+            auto queryPath   = request->get_path_parameters();  // multimap<string>
 
-            fprintf( stdout, "%s entry %s\n", method.c_str(), request->get_path().c_str() );
             for( auto header : headers )
             {
-                fprintf( stdout, "header: %s : %s \n", header.first.c_str(), header.second.c_str() );
+                m_pLog->logInfo( (boost::format( "entry_handler: headers %s : %s" ) % header.first % header.second).str() );
             }
             for( auto qp : queryParams )
             {
@@ -148,9 +151,16 @@ namespace restServer
                 {
                     nCount = std::stoi( qp.second.c_str() );
                 }
-                fprintf( stdout, "param: %s : %s \n", qp.first.c_str(), qp.second.c_str() );
+                m_pLog->logInfo( (boost::format( "entry_handler: query %s : %s" ) % qp.first % qp.second).str() );
             }
-            fprintf( stdout, "---------------- \n" );
+            for( auto qp : queryPath )
+            {
+                if( qp.first == "count" )
+                {
+                    nCount = std::stoi( qp.second.c_str() );
+                }
+                m_pLog->logInfo( (boost::format( "entry_handler: post %s : %s" ) % qp.first % qp.second).str() );
+            }
             return;
         };
         session->fetch( nContent_length, fn );
@@ -185,79 +195,60 @@ namespace restServer
         json js;
         if( path == "/api/v1/entries.json")
         {
-            if( m_pCache->verify_request( nCount ) )
+            if( false == m_pCache->verify_request( nCount ) )
             {
-                auto [bOk, vItem ] = m_pCache->front( nCount );
-                if( bOk == true )
+                nCount = m_pCache->size();
+            }
+            auto [bOk, vItem ] = m_pCache->front( nCount );
+            if( bOk == true )
+            {
+                for( auto item : vItem )
                 {
-                    for( auto item : vItem )
+                    string strDT;
+                    string strST;
+                    common::timeTickToString( item.ST, strDT, "%FT%TZ" );
+                    common::timeTickToString( item.ST, strST );
+                    json jsItem =
                     {
-                        string strDT;
-                        string strST;
-                        common::timeTickToString( item.DT, strDT );
-                        common::timeTickToString( item.DT, strST );
-                        json jsItem =
-                        {
-                                { "sgv",        item.value    },
-                                { "date",       item.DT       },
-                                { "dateString", strDT.c_str() },
-                                { "trend",      item.trend    },
-                                { "direction",  "Flat"        },
-                                { "device",     "share2"      },
-                                { "type",       "sgv"         },
-                                { "utcOffset",  0             },
-                                { "sysTime",    strST.c_str() }
-                        };
-                        js.push_back( jsItem );
-                    }
+                        { "sgv",        item.value          },
+                        { "date",       item.ST             },
+                        { "dateString", strDT.c_str()       },
+                        { "trend",      item.trend          },
+                        { "direction",  restHttpServer::trend( item.trend ) },
+                        { "device",     "share2"            },
+                        { "type",       "sgv"               },
+                        { "utcOffset",  -4                   },
+                        { "sysTime",    strST.c_str()       }
+                    };
+                    js.push_back( jsItem );
                 }
             }
-
-
-            //                        js =
-            //                        {
-            //                            {
-            //            //                    {"_id", "5ea64d3504b8fc0ad8e8cf56"},
-            //                                {"sgv", 123},
-            //                                {"date", 1588125626000},
-            //                                {"dateString", "2020-04-29T02:00:26.000Z"},
-            //                                {"trend", 4},
-            //                                {"direction", "Flat"},
-            //                                {"device", "share2"},
-            //                                {"type", "sgv"},
-            //                                {"utcOffset", 0},
-            //                                {"sysTime", "2020-04-27T03:10:18.000Z"}
-            //                            },
-            //                            {
-            //            //                    {"_id", "5ea64c0904b8fc0ad8e8c860"},
-            //                                {"sgv", 125},
-            //                                {"date", 1588125927000},
-            //                                {"dateString", "2020-04-29T02:05:26.000Z"},
-            //                                {"trend", 4},
-            //                                {"direction", "Flat"},
-            //                                {"device", "share2"},
-            //                                {"type", "sgv"},
-            //                                {"utcOffset", 0},
-            //                                {"sysTime", "2020-04-27T03:05:18.000Z"}
-            //                            }
-            //                        };
-        } else
-        {
-            js = { {{ "DT", "Date(1587665105000+0000)" }, { "ST", "Date(1587665105000+0000)" }, {"Trend", 5}, {"Value", 74}, {"WT", "Date(1587665105000+0000)"}} };
         }
         string strRes = js.dump();
         session->close( rest::OK, strRes, { { "Content-Length", std::to_string(strRes.length()) } } );
+
+        m_pLog->logDebug( (boost::format( "entry_handler: %s" ) % strRes ).str() );
+        m_pLog->logInfo( (boost::format( "entry_handler: request *** complete %s %s %s %s %s:%s" ) %
+                          request->get_host() % method % request->get_version() % request->get_protocol() %
+                          request->get_path() % request->get_port()).str()  );
     }
 }
 
 
 
-void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data::bg_cache *a_pCache, logging::log a_log )
+
+void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data::bg_cache *a_pCache, logging::log *a_pLog )
 {
     m_pCache = a_pCache;
+    m_pLog   = a_pLog;
     if( m_pCache == nullptr )
     {
-        a_log.logError( "invalid cache, rest service failed" );
+        a_pLog->logError( "invalid cache, rest service failed" );
+        return;
+    }
+    if( m_pLog == nullptr )
+    {
+        fprintf( stdout, "invalid log, rest service failed\n" );
         return;
     }
 
@@ -287,7 +278,7 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, data:
     //m_service.publish( dexLogin );
     //m_service.publish( dexBg );
     m_service.start( settings );
-    a_log.logInfo( "rest http server stopping" );
+    m_pLog->logInfo( "rest http server stopping" );
 }
 
 
@@ -296,3 +287,34 @@ void restServer::restHttpServer::stopRestServer()
 {
     m_service.stop();
 }
+
+
+///
+/// \brief trend - return string fro dexcom trend
+/// \param a_uTrend
+/// \return
+///
+const char* restServer::restHttpServer::trend( uint8_t a_uTrend )
+{
+
+    switch ( a_uTrend)
+    {
+        case 1:
+            return "DoubleUp";
+        case 2:
+            return "SingleUp";
+        case 3:
+            return "FortyFiveUp";
+        case 4:
+            return "Flat";
+        case 5:
+            return "FortyFiveDown";
+        case 6:
+            return "SingleDown";
+        case 7:
+            return "DoubleDown";
+        default:
+            return "";
+    }
+}
+

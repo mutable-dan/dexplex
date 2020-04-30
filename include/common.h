@@ -26,6 +26,7 @@ namespace logging
             std::shared_ptr<spdlog::logger>     m_pLogger;
 
             bool _log( const std::string& a_strMessage, const logLevel_t a_Level );
+            void setLevel();
 
         public:
             virtual ~log();
@@ -36,10 +37,10 @@ namespace logging
             void logError ( const std::string& a_strMessage ) override { _log( a_strMessage, LOG_TYPE::ERROR );   }
             void logDebug ( const std::string& a_strMessage ) override { _log( a_strMessage, LOG_TYPE::VERBOSE ); }
 
-            void setLevelInfo()    override { m_logLevel = LOG_TYPE::INFO;    }
-            void setLevelWarning() override { m_logLevel = LOG_TYPE::WARN;    }
-            void setLevelError()   override { m_logLevel = LOG_TYPE::ERROR;   }
-            void setLevelDebug()   override { m_logLevel = LOG_TYPE::VERBOSE; }
+            void setLevelInfo()    override { m_logLevel = LOG_TYPE::INFO;    setLevel(); }
+            void setLevelWarning() override { m_logLevel = LOG_TYPE::WARN;    setLevel(); }
+            void setLevelError()   override { m_logLevel = LOG_TYPE::ERROR;   setLevel(); }
+            void setLevelDebug()   override { m_logLevel = LOG_TYPE::VERBOSE; setLevel(); }
 
             bool isReady()         override { return (bool)m_pLogger;         }
     };
