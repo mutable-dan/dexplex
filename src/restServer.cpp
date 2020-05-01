@@ -151,10 +151,16 @@ namespace restServer
     void restServer::restHttpServer::entry_handler( const shared_ptr< rest::Session > session )
     {
         // api-secret
+        bool bValidUser = false;
         const auto request = session->get_request( );
         auto headers = request->get_headers( );
         auto method = request->get_method();  // ex http
         auto path = request->get_path();
+
+        string strUser;
+        string strValidUser;
+        m_pConfig->get( "allowedUser", strValidUser );
+
         m_pLog->logInfo( (boost::format( "entry_handler: request *** new %s %s %s %s %s:%s" ) %
                           request->get_host() % method % request->get_version() % request->get_protocol() %
                           request->get_path() % request->get_port()).str()  );
@@ -171,7 +177,7 @@ namespace restServer
         }
         int32_t nCount = 1;
 
-        auto fn = [&request, &nCount, this]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
+        auto fn = [&request, &nCount, &strUser, this]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
         {
             auto headers = request->get_headers( );
             auto queryParams = request->get_query_parameters();  // multimap<string>
@@ -186,6 +192,10 @@ namespace restServer
                 if( qp.first == "count" )
                 {
                     nCount = std::stoi( qp.second.c_str() );
+                }
+                if( qp.first == "rr" )
+                {
+                    strUser = qp.second.c_str();
                 }
                 m_pLog->logInfo( (boost::format( "entry_handler: query %s : %s" ) % qp.first % qp.second).str() );
             }
@@ -219,17 +229,26 @@ namespace restServer
         //            "dateString": "2020-04-29T02:05:26.000Z",
         //            "device": "share2",
         //            "direction": "Flat",
-        //            "sgv": 125,
+        //            "sgv": 125,.
         //            "sysTime": "2020-04-27T03:05:18.000Z",
         //            "trend": 4,
         //            "type": "sgv",
         //            "utcOffset": 0
         //        }
         //    ]
+        if( strUser == strValidUser )
+        {
+            bValidUser = true;
+            m_pLog->logInfo( (boost::format( "entry_handler: valid user %s" ) % strUser).str() );
+        } else
+        {
+            bValidUser = true;
+            m_pLog->logInfo( (boost::format( "entry_handler: invalid user %s" ) % strUser).str() );
+        }
 
 
         json js;
-        if( path == "/api/v1/entries.json")
+        if( (path == "/api/v1/entries.json") && (bValidUser == true) )
         {
             if( false == m_pCache->verify_request( nCount ) )
             {
@@ -314,6 +333,7 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, mutli
         cout << strPath << endl;
     };
 
+
     auto entry = make_shared< rest::Resource >( );
     entry->set_paths( m_setNighScout );
     entry->set_method_handler( "GET", fnEntry );
@@ -334,21 +354,21 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, mutli
 
     auto settings = make_shared< rest::Settings >( );
 
-    string strPrivKey;
-    string strCert;
-    m_pConfig->get( "privKeyPath", strPrivKey );
-    m_pConfig->get( "certPath", strCert );
-    filesystem::path privKeyPath( strPrivKey );
-    filesystem::path certPath( strCert );
-    if( filesystem::exists( privKeyPath ) && filesystem::exists( certPath ) )
-    {
-        auto ssl_settings = make_shared< rest::SSLSettings >( );
-        ssl_settings->set_http_disabled( true );
-        ssl_settings->set_private_key( rest::Uri( privKeyPath.c_str() ) );
-        ssl_settings->set_certificate( rest::Uri( certPath.c_str() ) );
-        ssl_settings->set_temporary_diffie_hellman( rest::Uri( "file:///tmp/dh768.pem" ) );
-        settings->set_ssl_settings( ssl_settings );
-    }
+    //    string strPrivKey;
+    //    string strCert;
+    //    m_pConfig->get( "privKeyPath", strPrivKey );
+    //    m_pConfig->get( "certPath", strCert );
+    //    filesystem::path privKeyPath( strPrivKey );
+    //    filesystem::path certPath( strCert );
+    //    if( filesystem::exists( privKeyPath ) && filesystem::exists( certPath ) )
+    //    {
+    //        auto ssl_settings = make_shared< rest::SSLSettings >( );
+    //        ssl_settings->set_http_disabled( true );
+    //        ssl_settings->set_private_key( rest::Uri( privKeyPath.c_str() ) );
+    //        ssl_settings->set_certificate( rest::Uri( certPath.c_str() ) );
+    //        ssl_settings->set_temporary_diffie_hellman( rest::Uri( "file:///tmp/dh768.pem" ) );
+    //        settings->set_ssl_settings( ssl_settings );
+    //    }
 
     settings->set_port(  a_unPort );
     settings->set_default_header( "Connection", "close" );

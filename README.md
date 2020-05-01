@@ -91,30 +91,68 @@ xDrip+
 -------------------------
 
 
+setting up reverse proxy
+----------------------------------
+lighthttpd
+    for ubuntu: add 'apt install gamin' if fails to start
+ /etc/lighttpd/lighttpd.conf sample
+     server.modules += ( "mod_proxy" )
+     proxy.debug = 65535
+     proxy.server = ( "" => ( "" => ( "host" => "127.0.0.1", "port" => 8080 ) ) )
+
+```
+
+     server.document-root        = "/var/www/html"
+     server.upload-dirs          = ( "/var/cache/lighttpd/uploads" )
+
+     server.errorlog             = "/var/log/lighttpd/error.log"
+     server.pid-file             = "/var/run/lighttpd.pid"
+     server.username             = "www-data"
+     server.groupname            = "www-data"
+     server.port                 = 80
+
+     compress.cache-dir          = "/var/cache/lighttpd/compress/"
+     compress.filetype           = ( "application/json", "application/javascript", "text/css", "text/html", "text/plain" )
+```
+
+```
+    passes all through
+    to pass only rntries through
+       $HTTP["url"] =~ "^/api/v1/entries.json" {
+       proxy.header = ("map-urlpath" => ( "/api/v1/entries.json" => "/" ))
+       proxy.server = ( "" => ( ( "host" =>  "127.0.0.1", "port" => 8080 ) ) )
+       }
+```
+
+caddy
+
+
+
+
 TODO
 ------------------------------------
+encode pwd in config
+handle missing data requests
+write bg to db
+handle more than one user
+handle when to request new data based on system time of last received - ie
 * get login working - done
 * get BG call working - done
 * basic logging - done
 * basic read config - done
 * class to manage rest dexcom calls - done
- has to handle errors - in progress
+* has to handle errors - in progress
 *  has to handle re-login  - done - not tested
- handle when to request new data based on system time of last received
- handle missing data requests
 * cache for BG - done
 * will read from logs at start (if avail) - done
 * write bg to logs - done
-write bg to db 
 * manage rest reader and writer - done
 * notifications of problems- - done
-handle more than one user
-encode pwd in config
 * handle errors in classes under mgr class - done
 * set next read absed on last read date (5 min interval) - done
 * look into what happends when last log entry is the next one read (ie restart less than 5 min after last read) - done
-
 * look into error when sending a_log as a ref
-void _start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log );
+
+
 
 
