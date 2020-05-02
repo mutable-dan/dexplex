@@ -147,7 +147,7 @@ namespace restServer
     /// \brief entry_handler
     /// \param session
     /// \note nighscout glucose api
-    /// \test curl  "http://127.0.0.1/api/v1/entries.json?count=1&rr=1587961452708" -H  "accept: application/json"| python3 -m json.tool
+    /// \test curl  "http://127.0.0.1/api/v1/entries.json?count=1&rr=1587961452708" -H  "accept: application/json" -H "User-Agent: xDrip+"| python3 -m json.tool
     void restServer::restHttpServer::entry_handler( const shared_ptr< rest::Session > session )
     {
         // api-secret
@@ -156,6 +156,7 @@ namespace restServer
         auto method = request->get_method();  // ex http
         auto path = request->get_path();
         int32_t nCount = 1;
+        bool bAuth = false;
 
         m_pLog->logInfo( (boost::format( "entry_handler: request *** new %s %s %s %s %s:%s" ) %
                           request->get_host() % method % request->get_version() % request->get_protocol() %
@@ -172,7 +173,7 @@ namespace restServer
             }
         }
 
-        auto fn = [&request, &nCount, this]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
+        auto fn = [&request, &nCount, &bAuth, this]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
         {
             auto headers = request->get_headers( );
             auto queryParams = request->get_query_parameters();  // multimap<string>
@@ -181,6 +182,14 @@ namespace restServer
             for( auto header : headers )
             {
                 m_pLog->logInfo( (boost::format( "entry_handler: headers %s : %s" ) % header.first % header.second).str() );
+                if( header.first == "User-Agent" )
+                {
+                    // simple way to try to limit to xdrip clients until xdrip provides swome auth mechanism or token
+                    if( header.second.find( "xDrip+" ) != std::string::npos )
+                    {
+                        bAuth = true;
+                    }
+                }
             }
             for( auto qp : queryParams )
             {
@@ -229,7 +238,7 @@ namespace restServer
         //    ]
 
         json js;
-        if( path == "/api/v1/entries.json" )
+        if( (path == "/api/v1/entries.json") && (bAuth == true) )
         {
             if( false == m_pCache->verify_request( nCount ) )
             {
@@ -259,6 +268,10 @@ namespace restServer
                     js.push_back( jsItem );
                 }
             }
+        } else
+        {
+            session->close( rest::NOT_FOUND );
+            return;
         }
         string strRes = js.dump();
         session->close( rest::OK, strRes, { { "Content-Length", std::to_string(strRes.length()) } } );
