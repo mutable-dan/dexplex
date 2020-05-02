@@ -76,7 +76,19 @@ sample test query
 -----------------------
  curl  "http://127.0.0.1//api/v1/entries.json?count=83&rr=1587921452717" -H  "accept: application/json"| python3 -m json.tool
  count is number of most recent data points to collect
- rr - ??
+ rr - System.currentTimeMillis from Models/JoH.java line 177
+ ```
+ 55         Call<List<Entry>> getEntries(
+                    @Header("api-secret") String secret,
+                    @Query("count") int count,
+                    @Query("rr") String rr);
+
+107    getService().getEntries(
+           session.url.getHashedSecret(),
+           count,
+           JoH.tsl() + "").enqueue(session.entriesCallback);
+
+```
 
 
 

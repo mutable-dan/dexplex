@@ -151,15 +151,11 @@ namespace restServer
     void restServer::restHttpServer::entry_handler( const shared_ptr< rest::Session > session )
     {
         // api-secret
-        bool bValidUser = false;
         const auto request = session->get_request( );
         auto headers = request->get_headers( );
         auto method = request->get_method();  // ex http
         auto path = request->get_path();
-
-        string strUser;
-        string strValidUser;
-        m_pConfig->get( "allowedUser", strValidUser );
+        int32_t nCount = 1;
 
         m_pLog->logInfo( (boost::format( "entry_handler: request *** new %s %s %s %s %s:%s" ) %
                           request->get_host() % method % request->get_version() % request->get_protocol() %
@@ -175,9 +171,8 @@ namespace restServer
                 nContent_length = std::stoi( strHeader );
             }
         }
-        int32_t nCount = 1;
 
-        auto fn = [&request, &nCount, &strUser, this]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
+        auto fn = [&request, &nCount, this]( const shared_ptr< rest::Session > /*session*/, const rest::Bytes & /*body*/ ) -> void
         {
             auto headers = request->get_headers( );
             auto queryParams = request->get_query_parameters();  // multimap<string>
@@ -192,10 +187,6 @@ namespace restServer
                 if( qp.first == "count" )
                 {
                     nCount = std::stoi( qp.second.c_str() );
-                }
-                if( qp.first == "rr" )
-                {
-                    strUser = qp.second.c_str();
                 }
                 m_pLog->logInfo( (boost::format( "entry_handler: query %s : %s" ) % qp.first % qp.second).str() );
             }
@@ -236,19 +227,9 @@ namespace restServer
         //            "utcOffset": 0
         //        }
         //    ]
-        if( strUser == strValidUser )
-        {
-            bValidUser = true;
-            m_pLog->logInfo( (boost::format( "entry_handler: valid user %s" ) % strUser).str() );
-        } else
-        {
-            bValidUser = true;
-            m_pLog->logInfo( (boost::format( "entry_handler: invalid user %s" ) % strUser).str() );
-        }
-
 
         json js;
-        if( (path == "/api/v1/entries.json") && (bValidUser == true) )
+        if( path == "/api/v1/entries.json" )
         {
             if( false == m_pCache->verify_request( nCount ) )
             {
@@ -353,29 +334,11 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, mutli
 
 
     auto settings = make_shared< rest::Settings >( );
-
-    //    string strPrivKey;
-    //    string strCert;
-    //    m_pConfig->get( "privKeyPath", strPrivKey );
-    //    m_pConfig->get( "certPath", strCert );
-    //    filesystem::path privKeyPath( strPrivKey );
-    //    filesystem::path certPath( strCert );
-    //    if( filesystem::exists( privKeyPath ) && filesystem::exists( certPath ) )
-    //    {
-    //        auto ssl_settings = make_shared< rest::SSLSettings >( );
-    //        ssl_settings->set_http_disabled( true );
-    //        ssl_settings->set_private_key( rest::Uri( privKeyPath.c_str() ) );
-    //        ssl_settings->set_certificate( rest::Uri( certPath.c_str() ) );
-    //        ssl_settings->set_temporary_diffie_hellman( rest::Uri( "file:///tmp/dh768.pem" ) );
-    //        settings->set_ssl_settings( ssl_settings );
-    //    }
-
     settings->set_port(  a_unPort );
     settings->set_default_header( "Connection", "close" );
 
     m_service.set_not_found_handler( fnNotfound );
     m_service.publish( entry );
-    m_service.publish( getCert );
     //m_service.publish( dexLogin );
     //m_service.publish( dexBg );
     m_service.start( settings );
