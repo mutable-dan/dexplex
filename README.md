@@ -65,7 +65,12 @@ httptimeout=20
 logpath=...
 loglevel=debug
 # levels avail: info|warn|error|debug
-note: leave out '<' and '>'
+httptimeout=20
+# timeout for requests to dexcom in seconds
+port=8080
+# listen port for xdrip requests
+
+
 
 sample test query
 -----------------------
@@ -125,6 +130,9 @@ lighthttpd
 ```
 
 caddy
+--------------
+    domain.tld:443
+    reverse_proxy 1.27.0.0.1:8080
 
 
 
