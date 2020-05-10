@@ -7,6 +7,13 @@
 #include <vector>
 #include <string>
 
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+namespace pt = boost::posix_time;
+namespace dt = boost::gregorian;
+
+
 TEST_CASE( "test cache", "[cache]" )
 {
     const int32_t nSize = 4;
@@ -151,6 +158,57 @@ TEST_CASE( "date tick", "[date]" )
         REQUIRE( strDateDt == "09/04/2020 16:39:08+0000" );
         REQUIRE( strDateSt == "09/04/2020 20:39:08+0000" );
         REQUIRE( strDateWt == "09/04/2020 20:39:08+0000" );
+
+
+    }
+}
+
+
+TEST_CASE( "determine count for dexcom request", "count" )
+{
+    SECTION( "check counts" )
+    {
+        pt::ptime epoch( dt::date( 1970, 1, 1 ) );
+        pt::ptime time = pt::second_clock::local_time();
+
+        auto epocSec = [&epoch]( pt::ptime& a_dispTime ) -> int64_t
+        {
+            return (int64_t)(a_dispTime - epoch).total_milliseconds();
+        };
+
+        pt::ptime dispTime_0 = time - pt::minutes( 0 );   // time of BG sample
+        pt::ptime dispTime_1 = time - pt::minutes( 1 );   // time of BG sample
+        pt::ptime dispTime_2 = time - pt::minutes( 2 );   // time of BG sample
+        pt::ptime dispTime_3 = time - pt::minutes( 3 );   // time of BG sample
+        pt::ptime dispTime_4 = time - pt::minutes( 4 );   // time of BG sample
+        pt::ptime dispTime_5 = time - pt::minutes( 5 );   // time of BG sample
+        pt::ptime dispTime_6 = time - pt::minutes( 6 );   // time of BG sample
+        pt::ptime dispTime_9 = time - pt::minutes( 9 );   // time of BG sample
+        pt::ptime dispTime_10 = time - pt::minutes( 10 );   // time of BG sample
+        pt::ptime dispTime_20 = time - pt::minutes( 20 );   // time of BG sample
+
+        int64_t nMissing = 0;
+        nMissing = common::countOfMisssing( epocSec( dispTime_0 ) );
+        REQUIRE( nMissing == 0 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_1 ) );
+        REQUIRE( nMissing == 0 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_2 ) );
+        REQUIRE( nMissing == 0 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_3 ) );
+        REQUIRE( nMissing == 0 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_4 ) );
+        REQUIRE( nMissing == 0 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_5 ) );
+        REQUIRE( nMissing == 1 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_6 ) );
+        REQUIRE( nMissing == 1 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_9 ) );
+        REQUIRE( nMissing == 1 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_10 ) );
+        REQUIRE( nMissing == 2 );
+        nMissing = common::countOfMisssing( epocSec( dispTime_20 ) );
+        REQUIRE( nMissing == 4 );
+
 
 
     }

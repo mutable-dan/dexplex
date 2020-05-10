@@ -1,5 +1,6 @@
 #pragma once
 #include "loggingInterface.h"
+#include "bg_cache.h"
 
 #include <string>
 #include <sstream>
@@ -87,5 +88,6 @@ namespace common
 {
     std::string& timeTickToString( int64_t a_ulTimens, std::string &a_strDateTime, const char* a_pszFormat = nullptr );
     auto         secondsToNextRead( uint64_t a_ulSystemTime ) -> std::tuple<uint64_t, std::string, std::string>;
+    int32_t      countOfMisssing( const int64_t a_dataLastRead );
     bool         dropPrivleges( const uint16_t a_newPriv );
 }

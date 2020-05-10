@@ -202,6 +202,14 @@ auto common::secondsToNextRead( uint64_t a_ulDispTime ) -> std::tuple<uint64_t, 
 }
 
 
+int32_t common::countOfMisssing( const int64_t a_dataLastRead )
+{
+    pt::ptime ptCurrentTime( pt::second_clock::local_time() );
+    pt::ptime ptLastRead( pt::from_time_t( a_dataLastRead/1000 ) );
+    pt::time_duration secondsElapsed = ptCurrentTime - ptLastRead;
+    return ( secondsElapsed.total_seconds() /  pt::minutes( 5 ).total_seconds() );
+}
+
 ///
 /// \brief common::dropPrivleges drop root and use new
 /// \note or use authbind
