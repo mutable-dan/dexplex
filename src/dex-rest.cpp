@@ -95,12 +95,13 @@ bool dexcom_share::login()
 ///
 auto dexcom_share::dexcomShareData()
 {
+   string strReturnMessage;
    if( (m_bLoggedIn == false) || (m_strSessionId.length() == 0) )
    {
-      return std::make_tuple( false, 0LU, "not logged in or no sessionid" );
+       strReturnMessage = "not logged in or no sessionid";
+      return std::make_tuple( false, 0LU, strReturnMessage );
    }
 
-   string strReturnMessage = "NO INFO";
    int32_t nCount  = 1;      // max record to get per call
    string strUrl        = m_strShareUrlbase + m_strShareGetBG;
    string strMinutes    = std::to_string( m_nMinutes );
@@ -127,14 +128,16 @@ auto dexcom_share::dexcomShareData()
       stringstream sstrErr;
       sstrErr << "bg request - error posting:" << response.text << ", BG reading failed" << e.what();
       error( sstrErr.str() );
-      return std::make_tuple( false, 0LU, e.what() );
+      strReturnMessage = e.what();
+      return std::make_tuple( false, 0LU, strReturnMessage );
    }
    if( response.status_code != m_cnHttpOk )
    {
       stringstream sstrErr;
       sstrErr << "bg error code - error:" << response.status_code << ", " << response.text << ", reading failed";
       error( sstrErr.str() );
-      return std::make_tuple( false, 0LU, "get bg data post failed hhtp notok" );
+      strReturnMessage = "get bg data post failed hhtp notok";
+      return std::make_tuple( false, 0LU, strReturnMessage );
    }
 
    json::json js_results;
@@ -148,7 +151,8 @@ auto dexcom_share::dexcomShareData()
       stringstream sstrErr;
       sstrErr << "bg parse - error parsing to json:" << response.text << ", bg reading failed" << pe.what();
       error( sstrErr.str() );
-      return std::make_tuple( false, 0LU, "failed to parse response" );
+      strReturnMessage = "failed to parse response";
+      return std::make_tuple( false, 0LU, strReturnMessage );
    }
 
    // protect m_vReadings 
@@ -210,7 +214,7 @@ auto dexcom_share::dexcomShareData()
        }
        m_vReadings.push_back( bg_value );
    }
-   return std::make_tuple( true, ulLastDispDate, strReturnMessage.c_str() );
+   return std::make_tuple( true, ulLastDispDate, strReturnMessage );
 }
 
 
@@ -290,7 +294,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
             bLoggedIn = false;  // assume for now that a failure means need to re-loggin
          }
          auto [bRes, ulDispDate, strReturnInfo] = thdBG.get();
-         a_log.logInfo( strReturnInfo );
+         a_log.logInfo( (boost::format( "bg post: %s") % strReturnInfo).str()  );
          // if new disp date then calc next read time, else pause and read again
          if( (ulLastDispDate != ulDispDate) )
          {
