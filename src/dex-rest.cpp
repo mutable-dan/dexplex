@@ -251,7 +251,7 @@ bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync, logging::log&
 ///
 void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log )
 {
-   a_log.logInfo( "dex shared started" );
+   a_log.logInfo( "bg loop: dex shared started" );
    bool bLoggedIn  = false;
    uint64_t ulLastDispDate = 0;
 
@@ -259,21 +259,21 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
    {
       if( false == bLoggedIn ) 
       {
-         a_log.logInfo( "logging in" );
+         a_log.logInfo( "bg loop: logging in" );
          auto thdLogin = async( &dexcom_share::login, this );
          future_status status = thdLogin.wait_for( chrono::seconds( m_nReqTimeout_sec ) );  
          if( status == future_status::timeout )
          {
-            a_log.logError( "login request timed out" );
+            a_log.logError( "bg loop: login request timed out" );
             continue; 
          }
          bLoggedIn = thdLogin.get();
-         if( true == bLoggedIn ) a_log.logInfo( "logged in" );
+         if( true == bLoggedIn ) a_log.logInfo( "bg loop: logged in" );
          if( isError() )
          {
             for( auto &item : errors() )
             {
-                a_log.logError( (boost::format( "login %s" ) % item).str() );
+                a_log.logError( (boost::format( "bg loop: login %s" ) % item).str() );
             }
             clearErrors();
          }
@@ -284,28 +284,28 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
       {
          // get BG
          // check for missing data and ajust
-         a_log.logInfo( "getting BG" );
+         a_log.logInfo( "bg loop: getting BG" );
          auto thdBG = async( &dexcom_share::dexcomShareData, this );
          future_status status = thdBG.wait_for( chrono::seconds( m_nReqTimeout_sec ) );
          if( status == future_status::timeout )
          {
             // thread is stuck, abandon and start again but log so a fix can be found
-            a_log.logError( "BG request timed out" );
+            a_log.logError( "bg loop: BG request timed out" );
             bLoggedIn = false;  // assume for now that a failure means need to re-loggin
          }
          auto [bRes, ulDispDate, strReturnInfo] = thdBG.get();
-         a_log.logInfo( (boost::format( "bg post: %s") % strReturnInfo).str()  );
+         a_log.logInfo( (boost::format( "bg loop: bg post: %s") % strReturnInfo).str()  );
          // if new disp date then calc next read time, else pause and read again
          if( (ulLastDispDate != ulDispDate) )
          {
              ulLastDispDate = ulDispDate;
              auto [secondsToNextRead_tmp, strCurrentTime, strLastReadTime] = common::secondsToNextRead( ulDispDate );
              secondsToNextRead = secondsToNextRead_tmp;
-             a_log.logInfo( (boost::format( "new reading: current time:%s, displaytime:%s, seconds to next read:%d" ) % strCurrentTime % strLastReadTime % secondsToNextRead).str() );
+             a_log.logInfo( (boost::format( "bg loop: new reading: current time:%s, displaytime:%s, seconds to next read:%d" ) % strCurrentTime % strLastReadTime % secondsToNextRead).str() );
          } else
          {
              secondsToNextRead = 15;
-             a_log.logInfo( (boost::format( "no reading: seconds to next read:%d" ) % secondsToNextRead).str() );
+             a_log.logInfo( (boost::format( "bg loop: no reading: seconds to next read:%d" ) % secondsToNextRead).str() );
          }
 
          if( bRes == false )
@@ -315,19 +315,19 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
                 for( auto &item : errors() )
                 {
                     // errors from BG request
-                    a_log.logError( (boost::format( "BG request %s" ) % item).str() );
+                    a_log.logError( (boost::format( "bg loop: BG request %s" ) % item).str() );
                 }
                 clearErrors();
              }
             bLoggedIn = false;
          } else
          {
-             a_log.logInfo( "received BG, signaling reader" );
+             a_log.logInfo( "bg loop: received BG, signaling reader" );
              a_pSync->signal();
          }
       } else
       {
-         a_log.logError( "login failed, will try again" );
+         a_log.logError( "bg loop: login failed, will try again" );
          secondsToNextRead = 20;
       }
 
