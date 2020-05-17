@@ -80,7 +80,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     m_ds.accoundId( strApplicationId );
 
     m_appLogger.logInfo( "starting dexshare" );
-    m_ds.start( m_spMonitor, m_appLogger );
+    m_ds.start( m_spMonitor, m_appLogger, m_cache.lastReadDate() );
 
     int32_t nPort = 8080;
     a_cfg.get( "port", nPort );

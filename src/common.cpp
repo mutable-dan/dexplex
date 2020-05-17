@@ -204,9 +204,15 @@ auto common::secondsToNextRead( uint64_t a_ulDispTime ) -> std::tuple<uint64_t, 
 
 int32_t common::countOfMisssing( const int64_t a_dataLastRead )
 {
-    pt::ptime ptCurrentTime( pt::second_clock::local_time() );
+    pt::ptime ptCurrentTime( pt::second_clock::universal_time() );
     pt::ptime ptLastRead( pt::from_time_t( a_dataLastRead/1000 ) );
     pt::time_duration secondsElapsed = ptCurrentTime - ptLastRead;
+    #ifndef NDEBUG
+        string strValue;
+        strValue = pt::to_iso_extended_string( ptCurrentTime );
+        strValue = pt::to_iso_extended_string( ptLastRead );
+        (void)strValue;
+    #endif
     return ( secondsElapsed.total_seconds() /  pt::minutes( 5 ).total_seconds() );
 }
 

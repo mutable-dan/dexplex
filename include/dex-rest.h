@@ -50,7 +50,6 @@ class dexcom_share final
       // see param defs for rest api calls: https://github.com/nightscout/share2nightscout-bridge
       // firstFetchCount - Changes maxCount during the very first update only
       int32_t                  m_nMinutes              = 1440;   // time window to search for data, default is one day
-      int32_t                  m_nMaxCount             = 1;      // max record to get per call
       std::vector<std::string> m_errorList;
 
       std::string              m_strUserName;
@@ -63,7 +62,7 @@ class dexcom_share final
       std::string              m_strSessionId;
 
       // get BC status
-      uint64_t                 m_ulLastReading         = 0;
+      int64_t                  m_lLastReadDate         = 0;
       vector_BG                m_vReadings;
       mutable std::mutex       m_muxBG;
 
@@ -91,7 +90,7 @@ class dexcom_share final
 
       bool getBG_Reading( vector_BG& a_vBg );
 
-      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log );
+      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log, int64_t a_lastReadDate );
       void stop()           { m_bStop = true; }
       void wait()           { if( m_thdDexcomShare.joinable() == true ) m_thdDexcomShare.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }

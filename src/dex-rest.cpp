@@ -1,4 +1,5 @@
 #include "../include/dex-rest.h"
+#include "../include/common.h"
 #include <sstream>
 #include <future>
 #include <chrono>
@@ -98,16 +99,24 @@ auto dexcom_share::dexcomShareData()
    {
       return std::make_tuple( false, 0LU );
    }
-   string strUrl      = m_strShareUrlbase + m_strShareGetBG;
-   string strMinutes   = std::to_string( m_nMinutes );
-   string strMaxCount = std::to_string( m_nMaxCount );
+
+   int32_t nCount  = 1;      // max record to get per call
+   string strUrl        = m_strShareUrlbase + m_strShareGetBG;
+   string strMinutes    = std::to_string( m_nMinutes );
+   string strCount;
 
    cpr::Response response;
    try
    {
+      if( m_lLastReadDate > 0 )
+      {
+          nCount = common::countOfMisssing( m_lLastReadDate );
+          if( nCount < 1 ) nCount = 1;
+      }
+      strCount = std::to_string( nCount );
       response = cpr::Post( 
             cpr::Url{ strUrl }, 
-            cpr::Parameters{ { "sessionId", m_strSessionId  }, { "minutes", strMinutes }, { "maxcount", strMaxCount } },
+            cpr::Parameters{ { "sessionId", m_strSessionId  }, { "minutes", strMinutes }, { "maxcount", strCount } },
             cpr::Body( "" )  // without body, content-length is not sent
             );
    } catch( std::exception &e )
@@ -192,6 +201,10 @@ auto dexcom_share::dexcomShareData()
        bg_value.trend = nTrend;
        ulLastDispDate = bg_value.DT;
 
+       if( bg_value.ST > m_lLastReadDate )
+       {
+           m_lLastReadDate = bg_value.ST;
+       }
        m_vReadings.push_back( bg_value );
    }
    return std::make_tuple( true, ulLastDispDate );
@@ -217,8 +230,9 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 /// \brief dexcom_share::start - call private start method async
 /// \return
 ///
-bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log )
+bool dexcom_share::start( shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log, int64_t a_lastReadDate )
 {
+   m_lLastReadDate = a_lastReadDate;
    a_log.logInfo( "dex shared stub called" );
    thread thd( &dexcom_share::_start, this, a_pSync, a_log );
    m_thdDexcomShare = std::move( thd );

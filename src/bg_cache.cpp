@@ -113,6 +113,10 @@ bool data::bg_cache::cashLoad( const std::string a_strPath, const cache_param_t 
                     bIsError = true;
                 }
                 m_bg_ring.push_front( bg );
+                if( bg.ST > m_lastReadDate )
+                {
+                    m_lastReadDate = bg.ST;
+                }
             }
         }
     }

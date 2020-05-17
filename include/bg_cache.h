@@ -13,6 +13,22 @@ namespace data
 
     // keyed on DT (device date) which is the date from the source whoch collected the value
     // store ST,WT, value, trend
+    // https://developer.dexcom.com/get-events-v1
+    //   systemTime    Time according to the system clock for the event; nominally UTC
+    //   displayTime   Time displayed on the receiving device for the event
+    // https://developer.dexcom.com/endpoint-overview
+    //   ISO 8601 standard
+    //   systemTime and displayTime
+    //   systemTime is the UTC time according to the device
+    //   displayTime is the time being shown on the device to the user
+    //     Depending on the device, this time may be user-configurable, and can therefore change its offset
+    //     relative to systemTime.
+    //   Note that systemTime is not "true" UTC time because of drift and/or user manipulation of the devices' clock
+    // example
+    // DT = 1589657198000  local time  7:26
+    // ST = 1589671598000  UTC
+    // WT = 1589671598000
+
     class bg_data
     {
         public:
@@ -33,8 +49,8 @@ namespace data
             bool operator>= ( const bg_data& a_rhs )   { return DT >= a_rhs.DT; }
             bool operator== ( const bg_data& a_rhs )   { if( (DT == a_rhs.DT) && (ST == a_rhs.ST) && (WT == a_rhs.WT) && (value == a_rhs.value) && (trend == a_rhs.trend) ) return true; else return false; }
             bool operator!= ( const bg_data& a_rhs )   { return !(*this == a_rhs); }
-
     };
+
 
     using bg_buffer_t   = boost::circular_buffer<bg_data>;
     using cache_param_t = std::function< bool( const std::string &, data::bg_data &) >;
@@ -44,6 +60,7 @@ namespace data
         private:
             bg_buffer_t m_bg_ring;
             int32_t     m_nCapacity;    // capacity is defaulted to 1 day of data where data arrives every 5 minutes
+            int64_t     m_lastReadDate = 0;
 
             mutable std::mutex  m_mux;
         public:
@@ -59,7 +76,7 @@ namespace data
             const bg_buffer_t* data() { return &m_bg_ring; }
 
             bool cashLoad( const std::string a_strPath, const cache_param_t &a_processLLogEntry );
-
+            int64_t lastReadDate() { return m_lastReadDate; }
     };
 
 }
