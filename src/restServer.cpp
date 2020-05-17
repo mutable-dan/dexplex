@@ -249,7 +249,7 @@ namespace restServer
             {
                 for( auto item : vItem )
                 {
-                    m_pLog->logDebug( (boost::format( "entry_handler: ST:%d BG:%d" ) % item.ST % item.value ).str() );
+                    m_pLog->logInfo( (boost::format( "entry_handler: ST:%d BG:%d" ) % item.ST % item.value ).str() );
                     string strDT;
                     string strST;
                     common::timeTickToString( item.ST, strDT, "%FT%TZ" );
