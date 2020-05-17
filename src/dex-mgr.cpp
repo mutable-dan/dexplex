@@ -128,7 +128,7 @@ void dexshareManager::stop()
 ///
 void dexshareManager::reader( std::function< void( const std::string &) > a_log_bg  )
 {
-    string strBgFormat = R"(bg reader: systime:%s,displaytime:%s,dt:%d,st:%d,wt:%d,bg:%d,trend:%d)";
+    string strBgFormat = R"(systime:%s,displaytime:%s,dt:%d,st:%d,wt:%d,bg:%d,trend:%d)";
     m_appLogger.logInfo( "bg reader: entering BG reader" );
 
     dexcom_share::vector_BG vBg;
