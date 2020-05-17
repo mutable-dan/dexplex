@@ -128,8 +128,8 @@ void dexshareManager::stop()
 ///
 void dexshareManager::reader( std::function< void( const std::string &) > a_log_bg  )
 {
-    string strBgFormat = R"(systime:%s,displaytime:%s,dt:%d,st:%d,wt:%d,bg:%d,trend:%d)";
-    m_appLogger.logInfo( "entering BG reader" );
+    string strBgFormat = R"(bg reader: systime:%s,displaytime:%s,dt:%d,st:%d,wt:%d,bg:%d,trend:%d)";
+    m_appLogger.logInfo( "bg reader: entering BG reader" );
 
     dexcom_share::vector_BG vBg;
     m_bReaderReady = true;  // not perfect, but good enough sync, monitor start in wait condition
@@ -137,7 +137,7 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
     {
         m_spMonitor->wait();   // signaled whenever data is ready
         if( m_bReaderStop == true ) continue;
-        m_appLogger.logDebug( "reader read bg" );
+        m_appLogger.logDebug( "bg reader: read bg" );
         m_ds.getBG_Reading( vBg );
 
         for( const auto &bg : vBg  )
@@ -147,7 +147,7 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
             {
                 if( bg.DT == prevValue.DT )
                 {
-                    m_appLogger.logWarn( "BG has not updated since last reading, duplicate" );
+                    m_appLogger.logWarn( "bg reader: BG has not updated since last reading, duplicate" );
                     continue;
                 }
             }
@@ -158,9 +158,9 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
             a_log_bg( (boost::format( strBgFormat ) % strSystemTime % strDisplayTime % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
             m_cache.push( bg );
         }
-        m_appLogger.logDebug( "reader read complete" );
+        m_appLogger.logDebug( "bg reader: read complete" );
     }
-    m_appLogger.logDebug( "exit reader" );
+    m_appLogger.logDebug( "bg reader: exit" );
 }
 
 

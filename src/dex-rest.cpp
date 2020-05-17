@@ -294,7 +294,7 @@ void dexcom_share::_start( shared_ptr<sync_tools::monitor> a_pSync, logging::log
             bLoggedIn = false;  // assume for now that a failure means need to re-loggin
          }
          auto [bRes, ulDispDate, strReturnInfo] = thdBG.get();
-         a_log.logInfo( (boost::format( "bg loop: bg post: %s") % strReturnInfo).str()  );
+         a_log.logInfo( (boost::format( "bg post: %s") % strReturnInfo).str()  );
          // if new disp date then calc next read time, else pause and read again
          if( (ulLastDispDate != ulDispDate) )
          {
