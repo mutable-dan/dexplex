@@ -6,8 +6,8 @@
 #include "../include/common.h"
 #include "../include/restServer.h"
 
-#include <mutlib/config.h>
-#include <mutlib/util.h>
+#include <mutlibs/config.h>
+#include <mutlibs/util.h>
 #include <functional>
 #include <atomic>
 #include <memory>
