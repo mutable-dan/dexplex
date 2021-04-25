@@ -2,7 +2,7 @@
 
 #include "../include/common.h"
 #include "../include/bg_cache.h"
-#include <mutlib/config.h>
+#include <mutlibs/config.h>
 
 #include <string>
 #include <set>
