@@ -44,7 +44,7 @@ Opensource projects such as xDrip+ https://jamorham.github.io/#xdrip-plus provid
 
 #### logging
   -------------------------------------
-  spdlog - not using hdr only to reduce compile time
+  spdlog - compile (don't use header only to reduce compile time)
     https://github.com/gabime/spdlog
 
 #### hostsetup
