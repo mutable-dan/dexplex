@@ -1,4 +1,4 @@
-CC=g++-8
+CC=g++
 
 INSTALL_DIR = ../bin
 INCLUDE_DIR = -I. -I../cpr/include/ -I../json/include/ -I../spdlog/include/
