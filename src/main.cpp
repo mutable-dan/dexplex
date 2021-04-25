@@ -5,8 +5,8 @@
 #include <sstream>
 #include <boost/format.hpp>
 
-#include <libdaemon/daemon.h>
-#include <mutlib/config.h>
+#include <daemon/daemon.h>
+#include <mutlibs/config.h>
 #include <sys/types.h>
 
 #include "../include/common.h"
