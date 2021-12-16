@@ -1,5 +1,6 @@
 #include "../include/dex-rest.h"
 #include "../include/common.h"
+#include <ctype.h>
 #include <sstream>
 #include <future>
 #include <chrono>
@@ -19,6 +20,46 @@
 
 using namespace std;
 namespace json = nlohmann;
+
+
+int32_t dexcom_share::slope_string_to_number( const string a_strSlope )
+{
+   string strSlope = a_strSlope;
+   transform( strSlope.begin(), strSlope.begin(), strSlope.end(), ::tolower );
+
+   if( strSlope == "doubleup"      ) return 1;
+   if( strSlope == "singleup"      ) return 2;
+   if( strSlope == "fortyfiveup"   ) return 3;
+   if( strSlope == "flat"          ) return 4;
+   if( strSlope == "fortyfivedown" ) return 5;
+   if( strSlope == "singledown"    ) return 6;
+   if( strSlope == "doubledown"    ) return 7;
+   return 4;
+}
+ 
+string dexcom_share::slope_number_to_string( const int32_t a_nSlope )
+{
+   switch( a_nSlope )
+   {
+      case 1:
+            return "DoubleUp";
+      case 2:
+            return "SingleUp";
+      case 3:
+            return "FortyFiveUp";
+      case 4:
+            return "Flat";
+      case 5:
+            return "FortyFiveDown";
+      case 6:
+            return "SingleDown";
+      case 7:
+            return "DoubleDown";
+      default:
+            return "";
+   }
+}   
+    
 
 ///
 /// \brief dexcom_share::login
@@ -120,7 +161,7 @@ auto dexcom_share::dexcomShareData()
       strReturnMessage = (boost::format( "request info: sessionid:%s, minutes:%s, count:%s" ) % m_strSessionId % strMinutes % strCount ).str();
       response = cpr::Post( 
             cpr::Url{ strUrl }, 
-            cpr::Parameters{ { "sessionId", m_strSessionId  }, { "minutes", strMinutes }, { "maxcount", strCount } },
+            cpr::Parameters{ { "sessionId", m_strSessionId  }, { "minutes", strMinutes }, { "MaxCount", strCount } },
             cpr::Body( "" )  // without body, content-length is not sent
             );
    } catch( std::exception &e )
@@ -143,6 +184,7 @@ auto dexcom_share::dexcomShareData()
    json::json js_results;
    // sample response
    // "[{\"DT\":\"\\/Date(1587664805000+0000)\\/\",\"ST\":\"\\/Date(1587679205000)\\/\",\"Trend\":5,\"Value\":74,\"WT\":\"\\/Date(1587679205000)\\/\"}]"
+
    try
    {
       js_results = json::json::parse( response.text );
@@ -174,7 +216,7 @@ auto dexcom_share::dexcomShareData()
           strSt    = value[ "ST" ];
           strWt    = value[ "WT" ];
           nBG      = value[ "Value" ];
-          nTrend   = value[ "Trend" ];
+          nTrend   = slope_string_to_number( value[ "Trend" ] );
        } catch( std::exception &e )
        {
           stringstream sstr;
@@ -184,7 +226,7 @@ auto dexcom_share::dexcomShareData()
        }
       
 
-       const int32_t cnRemoveDate = 6;
+       const int32_t cnRemoveDate = 5;
        strDt.erase( strDt.begin(), strDt.begin()+cnRemoveDate );
        strSt.erase( strSt.begin(), strSt.begin()+cnRemoveDate );
        strWt.erase( strWt.begin(), strWt.begin()+cnRemoveDate );

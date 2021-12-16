@@ -101,7 +101,7 @@ namespace restServer
            {
                strSessionId = iter->second;
            }
-
+            
            //"[\n  {\n    \"DT\": \"\\\"Date(1587665105000+0000)\\\"\", \n    \"ST\": \"\\\"Date(1587665105000+0000)\\\"\", \n    \"Trend\": 5, \n    \"Value\": 74, \n    \"WT\": \"\\\"Date(1587665105000+0000)\\\"\"\n  }\n]\n"
            string strRet = "{ \"DT\" : \"\"Date(1587665105000+0000)\"\", \"ST\" : \"\"Date(1587665105000+0000)\"\", \"Trend\" : 5, \"Value\" : 74, \"WT\" : \"\"Date(1587665105000+0000)\"\" }";
            json js = { {{ "DT", "Date(1587665105000+0000)" }, { "ST", "Date(1587665105000+0000)" }, {"Trend", 5}, {"Value", 74}, {"WT", "Date(1587665105000+0000)"}} };
@@ -153,8 +153,8 @@ namespace restServer
         // api-secret
         const auto request = session->get_request( );
         auto headers = request->get_headers( );
-        auto method = request->get_method();  // ex http
-        auto path = request->get_path();
+        auto method  = request->get_method();  // ex http
+        auto path    = request->get_path();
         int32_t nCount = 1;
         bool bAuth = false;
 
@@ -259,11 +259,11 @@ namespace restServer
                         { "sgv",        item.value          },
                         { "date",       item.ST             },
                         { "dateString", strDT.c_str()       },
-                        { "trend",      item.trend          },
+                        { "Trend",      item.trend          },
                         { "direction",  restHttpServer::trend( item.trend ) },
                         { "device",     "share2"            },
                         { "type",       "sgv"               },
-                        { "utcOffset",  -4                   },
+                        { "utcOffset",  -4                  },
                         { "sysTime",    strST.c_str()       }
                     };
                     js.push_back( jsItem );
@@ -277,7 +277,7 @@ namespace restServer
         string strRes = js.dump();
         session->close( rest::OK, strRes, { { "Content-Length", std::to_string(strRes.length()) } } );
 
-        m_pLog->logDebug( (boost::format( "entry_handler: %s" ) % strRes ).str() );
+        m_pLog->logDebug( (boost::format( "entry_handler debug: %s" ) % strRes ).str() );
         m_pLog->logInfo( (boost::format( "entry_handler: request *** complete %s %s %s %s %s:%s" ) %
                           request->get_host() % method % request->get_version() % request->get_protocol() %
                           request->get_path() % request->get_port()).str()  );

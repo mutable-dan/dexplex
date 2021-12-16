@@ -98,4 +98,8 @@ class dexcom_share final
       bool isError() const{ return m_errorList.size() > 0; }
       const auto& errors() const { return m_errorList; }
       void clearErrors()   { m_errorList.clear(); }
+
+      int32_t     slope_string_to_number( const std::string a_strSlope );
+      std::string slope_number_to_string( const int32_t a_nSlope );
+
 };
