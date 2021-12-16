@@ -108,7 +108,7 @@ int main( int argc, char* argv[] )
     // app start
     appLog.logInfo( "config file read ok" );
     appLog.logInfo( (boost::format( "%s starting" ) % argv[0]).str() );
-    spdlog::info( "{} starting", argv[0] );     // conio
+    spdlog::info( "{} ...", argv[0] );     // conio
 
     tools::Daemon app;
     queue<string> qCommands;
