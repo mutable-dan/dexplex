@@ -9,6 +9,13 @@ Sits between dexcom share and xdrip clients.
 Dexcom produces a CGM (continuous glucose monitor) and has a 'share' interface to allow caregivers to monitor a user.
 Opensource projects such as xDrip+ https://jamorham.github.io/#xdrip-plus provide excellent alternative monitoring solutions for android.  xDrip can connect directly to dexcom share or you can setup your own server with https://github.com/nightscout
 
+logs
+  bg log is blood glucose log
+  dexplex log is app logging
+
+ncat
+nc -lk -p 8081
+
 
 ### dependencies
  ----------------
@@ -18,11 +25,22 @@ Opensource projects such as xDrip+ https://jamorham.github.io/#xdrip-plus provid
 #### cpr
   ----------------------------------
   rest lib sending
+     https://github.com/libcpr/cpr
+
      https://github.com/whoshuu/cpr
      https://github.com/whoshuu/cpr.git
      cd cpr && git submodule update --init --recursive
 
      apt install libssl-dev
+     apt install libcurl4-gnutls-dev
+
+     buillt off trunk but can use tag
+     git clone https://github.com/libcpr/cpr.git
+     mkdir build && cd build
+     # with ubuntu 22.04 using the system curl library causes an internal error
+     cmake .. -DCPR_USE_SYSTEM_CURL=OFF -DCURL_VERBOSE_LOGGING=OFF
+     cmake --build .
+     sudo cmake --install .
 
      mkdir build && cd build
      cmake ..
@@ -40,12 +58,30 @@ Opensource projects such as xDrip+ https://jamorham.github.io/#xdrip-plus provid
   -------------------------------------
 *  https://github.com/nlohmann/json
 *  https://nlohmann.github.io/json/
+mkdir build && cd build
+cmake --build .
+make all
+do not do  - make install
+no lib, all headers
+
+ln -s ~/open-source-projects/json/include/nlohmann/ nlohmann
+
+-- Install configuration: ""
+-- Up-to-date: /usr/local/include
+-- Installing: /usr/local/include/nlohmann
+-- Installing: /usr/local/include/nlohmann/json.hpp
+-- Installing: /usr/local/include/nlohmann/json_fwd.hpp
+-- Installing: /usr/local/share/cmake/nlohmann_json/nlohmann_jsonConfig.cmake
+-- Installing: /usr/local/share/cmake/nlohmann_json/nlohmann_jsonConfigVersion.cmake
+-- Installing: /usr/local/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake
+-- Installing: /usr/local/share/pkgconfig/nlohmann_json.pc
 
 
 #### logging
   -------------------------------------
   spdlog - compile (don't use header only to reduce compile time)
     https://github.com/gabime/spdlog
+    apt install libspdlog-dev
 
 #### hostsetup
   -------------

@@ -39,7 +39,7 @@ int main( int argc, char* argv[] )
     mutlib::config cfg;
     if( !cfg.read( pszConfig ) )
     {
-        spdlog::error( "error opening config file:%s", pszConfig );
+        cerr << "error opening config file:" << pszConfig << endl;
         return -1;
     }
     string strLogPath;
@@ -60,7 +60,20 @@ int main( int argc, char* argv[] )
 
     appLog.setLevelInfo();  // NOTE: must be set from config
     appLog.logInfo( "********* starting service *********" );
-    appLog.logInfo( (boost::format( "config log level requested %s") % strLogLevel).str() );
+    appLog.logInfo( (boost::format( "config log level requested %s" ) % strLogLevel).str() );
+    appLog.logInfo( (boost::format( "config log path %s" ) % strLogPath).str() );
+
+    string strPort;
+    string strAccount;
+    if( true == cfg.get( "port", strPort ) )
+    {
+        appLog.logInfo( (boost::format( "config port %s" ) % strPort).str() );
+    }
+    if( true == cfg.get( "account", strAccount ) )
+    {
+        appLog.logInfo( (boost::format( "config account %s" ) % strAccount).str() );
+    }
+
 
     // set log level from config
     if( strLogLevel == "warn"  )
@@ -107,7 +120,7 @@ int main( int argc, char* argv[] )
 
     // app start
     appLog.logInfo( "config file read ok" );
-    appLog.logInfo( (boost::format( "%s starting" ) % argv[0]).str() );
+    appLog.logInfo( (boost::format( "%s initializing" ) % argv[0]).str() );
     spdlog::info( "{} ...", argv[0] );     // conio
 
     tools::Daemon app;

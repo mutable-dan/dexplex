@@ -8,7 +8,8 @@
 
 #include <boost/format.hpp>
 
-#include "../../json/include/nlohmann/json.hpp"
+//#include "../../json/include/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
@@ -72,14 +73,17 @@ bool dexcom_share::login()
    m_strSessionId.clear();
    if( m_strUserName.empty() || m_strPassword.empty() || m_strAccoundId.empty() )
    {
-      error( "incomplete credientials: user,pwd or accoundId" );
+      error( "dexcom: incomplete credientials: user,pwd or accoundId" );
       return false;
    }
-   string strAuth = R"({"accountName" : "%s", "password" : "%s", "applicationId" : "%s"})";
+   string strAuth = R"({"accountName" : "%s", "password" : "%s", "applicationId" : "%s "})";
    stringstream sstr;
    sstr << boost::format( strAuth ) % m_strUserName % m_strPassword % m_strAccoundId;
 
    string strUrl = m_strShareUrlbase + m_strShareLogin;
+
+   string str1 = sstr.str().c_str();
+
    nlohmann::json js;
    try
    {
@@ -87,10 +91,12 @@ bool dexcom_share::login()
    } catch( nlohmann::json::parse_error &pe )
    {
       stringstream sstrErr;
-      sstrErr << "login parse - error parsing to json:" << sstr.str() << ", login failed" << pe.what();
+      sstrErr << "dexcom: login parse - error parsing to json:" << sstr.str() << ", login failed" << pe.what();
       error( sstrErr.str() );
       return false;
    }
+
+   string str2 = js.dump( 2 );
 
    // make request
    
@@ -99,13 +105,15 @@ bool dexcom_share::login()
    {
       response = cpr::Post( 
             cpr::Url{ strUrl }, 
-            cpr::Header{ {"User-Agent", "Dexcom Share/3.0.2.11 CFNetwork/711.2.23 Darwin/14.0.0"} }, 
+            cpr::Header{ {"User-Agent", "Dexcom Share/3.0.2.11 CFNetwork/711.2.23 Darwin/14.0.0"} },
             cpr::Header{ {"Content-Type", "application/json"} },
-            cpr::Body( js.dump() ) );
+            cpr::Body{ js.dump() }
+            //cpr::Verbose{}
+            );
    } catch( std::exception &e )
    {
       stringstream sstrErr;
-      sstrErr << "login post - error posting:" << sstr.str() << ", reading failed" << e.what();
+      sstrErr << "dexcom: login post - error posting:" << sstr.str() << ", reading failed" << e.what();
       error( sstrErr.str() );
       return false;
    }
@@ -114,7 +122,9 @@ bool dexcom_share::login()
    if( (m_nLoginStatusCode != m_cnHttpOk) )
    {
       stringstream sstrErr;
-      sstrErr << "login error code - error posting:" << response.status_code << ", " << response.text << ", reading failed";
+      sstrErr << "dexcom: login error code - error posting:" << response.status_code << ", " << response.text << ", reading failed";
+      string strErr = sstrErr.str();
+
       error( sstrErr.str() );
       return false;
    }
@@ -139,7 +149,7 @@ auto dexcom_share::dexcomShareData()
    string strReturnMessage;
    if( (m_bLoggedIn == false) || (m_strSessionId.length() == 0) )
    {
-       strReturnMessage = "not logged in or no sessionid";
+       strReturnMessage = "dexcom: not logged in to dexcom or no sessionid";
       return std::make_tuple( false, 0LU, strReturnMessage );
    }
 
@@ -158,7 +168,7 @@ auto dexcom_share::dexcomShareData()
       }
       strCount = std::to_string( nCount );
 
-      strReturnMessage = (boost::format( "request info: sessionid:%s, minutes:%s, count:%s" ) % m_strSessionId % strMinutes % strCount ).str();
+      strReturnMessage = (boost::format( "dexcom: POST request bg : sessionid:%s, minutes:%s, count:%s" ) % m_strSessionId % strMinutes % strCount ).str();
       response = cpr::Post( 
             cpr::Url{ strUrl }, 
             cpr::Parameters{ { "sessionId", m_strSessionId  }, { "minutes", strMinutes }, { "MaxCount", strCount } },
@@ -167,7 +177,7 @@ auto dexcom_share::dexcomShareData()
    } catch( std::exception &e )
    {
       stringstream sstrErr;
-      sstrErr << "bg request - error posting:" << response.text << ", BG reading failed" << e.what();
+      sstrErr << "dexcom: bg request - error posting:" << response.text << ", BG reading failed" << e.what();
       error( sstrErr.str() );
       strReturnMessage = e.what();
       return std::make_tuple( false, 0LU, strReturnMessage );
@@ -175,9 +185,9 @@ auto dexcom_share::dexcomShareData()
    if( response.status_code != m_cnHttpOk )
    {
       stringstream sstrErr;
-      sstrErr << "bg error code - error:" << response.status_code << ", " << response.text << ", reading failed";
+      sstrErr << "dexcom: bg error code - error:" << response.status_code << ", " << response.text << ", reading failed";
       error( sstrErr.str() );
-      strReturnMessage = "get bg data post failed hhtp notok";
+      strReturnMessage = "dexcom: get bg data post failed hhtp not ok";
       return std::make_tuple( false, 0LU, strReturnMessage );
    }
 

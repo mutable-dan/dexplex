@@ -75,9 +75,9 @@ namespace restServer
        int nContent_length = 0;
        auto fn = [&request]( const shared_ptr< rest::Session > session, const rest::Bytes & /*body*/ ) -> void
        {
-           auto headers = request->get_headers( );
-           auto path = request->get_path();
-           auto method = request->get_method();
+           auto headers    = request->get_headers( );
+           auto path       = request->get_path();
+           auto method     = request->get_method();
            auto mmapParams = request->get_query_parameters();
            //auto mmapParams = request->get_path_parameters();
 
@@ -158,7 +158,7 @@ namespace restServer
         int32_t nCount = 1;
         bool bAuth = false;
 
-        m_pLog->logInfo( (boost::format( "entry_handler: request *** new %s %s %s %s %s:%s" ) %
+        m_pLog->logInfo( (boost::format( "rest server: entry_handler: request *** new %s %s %s %s %s:%s" ) %
                           request->get_host() % method % request->get_version() % request->get_protocol() %
                           request->get_path() % request->get_port()).str()  );
 
@@ -181,7 +181,7 @@ namespace restServer
 
             for( auto header : headers )
             {
-                m_pLog->logInfo( (boost::format( "entry_handler: headers %s : %s" ) % header.first % header.second).str() );
+                m_pLog->logInfo( (boost::format( "rest server: entry_handler: headers %s : %s" ) % header.first % header.second).str() );
                 if( header.first == "User-Agent" )
                 {
                     // simple way to try to limit to xdrip clients until xdrip provides swome auth mechanism or token
@@ -197,7 +197,7 @@ namespace restServer
                 {
                     nCount = std::stoi( qp.second.c_str() );
                 }
-                m_pLog->logInfo( (boost::format( "entry_handler: query %s : %s" ) % qp.first % qp.second).str() );
+                m_pLog->logInfo( (boost::format( "rest server: entry_handler: query %s : %s" ) % qp.first % qp.second).str() );
             }
             for( auto qp : queryPath )
             {
@@ -205,7 +205,7 @@ namespace restServer
                 {
                     nCount = std::stoi( qp.second.c_str() );
                 }
-                m_pLog->logInfo( (boost::format( "entry_handler: post %s : %s" ) % qp.first % qp.second).str() );
+                m_pLog->logInfo( (boost::format( "rest server: entry_handler: post %s : %s" ) % qp.first % qp.second).str() );
             }
             return;
         };
@@ -249,7 +249,7 @@ namespace restServer
             {
                 for( auto item : vItem )
                 {
-                    m_pLog->logInfo( (boost::format( "entry_handler: ST:%d BG:%d" ) % item.ST % item.value ).str() );
+                    m_pLog->logInfo( (boost::format( "rest server: entry_handler: ST:%d BG:%d" ) % item.ST % item.value ).str() );
                     string strDT;
                     string strST;
                     common::timeTickToString( item.ST, strDT, "%FT%TZ" );
@@ -277,8 +277,8 @@ namespace restServer
         string strRes = js.dump();
         session->close( rest::OK, strRes, { { "Content-Length", std::to_string(strRes.length()) } } );
 
-        m_pLog->logDebug( (boost::format( "entry_handler debug: %s" ) % strRes ).str() );
-        m_pLog->logInfo( (boost::format( "entry_handler: request *** complete %s %s %s %s %s:%s" ) %
+        m_pLog->logDebug( (boost::format( "rest server: entry_handler debug: %s" ) % strRes ).str() );
+        m_pLog->logInfo( (boost::format( "rest server: (rest server is local, not using dexcom services) entry_handler: request *** complete %s %s %s %s %s:%s" ) %
                           request->get_host() % method % request->get_version() % request->get_protocol() %
                           request->get_path() % request->get_port()).str()  );
     }

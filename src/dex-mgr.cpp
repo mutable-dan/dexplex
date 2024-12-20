@@ -93,6 +93,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
 
 ///
 /// \brief dexcom_share::wait
+/// \note after a stop is issue wait for all threads to end
 ///
 void dexshareManager::wait()
 {
