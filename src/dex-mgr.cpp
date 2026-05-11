@@ -76,7 +76,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     }
     m_thdReader = std::move( thd );
 
-    if( true )
+    if( false )
     {
         m_pDexData = new dexcom_share();
         dynamic_cast<dexcom_share*> (m_pDexData)->userName( strAccount );
@@ -84,6 +84,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
         dynamic_cast<dexcom_share*> (m_pDexData)->accoundId( strApplicationId );
     } else
     {
+        m_pDexData = new dexcom_file();
         dynamic_cast<dexcom_file*> (m_pDexData)->setFile( "bad_values/dexcom-3-lines.xml" );
     }
 

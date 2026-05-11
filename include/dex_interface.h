@@ -1,5 +1,6 @@
 #pragma once
-#include "../include/common.h"
+#include "include/common.h"
+#include "include/bg_cache.h"
 #include <memory>
 
 class dex_interface
@@ -11,5 +12,5 @@ class dex_interface
       virtual void stop() = 0;
       virtual void wait() = 0;
       virtual bool isNewDataReady() = 0;
-      //virtual bool getBG_Reading( vector_BG& a_vBg ) = 0;
+      virtual bool getBG_Reading( vector_BG& a_vBg ) = 0;
 };

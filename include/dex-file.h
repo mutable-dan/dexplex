@@ -31,7 +31,7 @@
 class dexcom_file final : public virtual dex_interface
 {
    public:
-      using vector_BG  = std::vector<data::bg_data>;
+      //using vector_BG  = std::vector<data::bg_data>;
 
    private:
       int64_t                 m_lastReadDate    = 0;

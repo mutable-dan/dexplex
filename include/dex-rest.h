@@ -35,7 +35,7 @@ class dexcom_share final : public virtual dex_interface
 {
    public:
       using returnType = std::optional<std::string>;
-      using vector_BG  = std::vector<data::bg_data>;
+      //using vector_BG  = std::vector<data::bg_data>;
 
    private:
       //const std::string        m_strShareUrlbase       = "https://share2.dexcom.com/";

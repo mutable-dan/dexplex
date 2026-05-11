@@ -60,3 +60,8 @@ auto dexcom_file::dexcomFileData() -> std::tuple<bool, uint64_t, std::string>
 
    return std::make_tuple( true, ulLastDispDate, std::move(strReturnMessage) );
 }
+
+bool dexcom_file::getBG_Reading( vector_BG &a_vBg )
+{
+   return true;
+}
