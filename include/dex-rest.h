@@ -19,9 +19,10 @@
 // SOFTWARE.
 
 #pragma once
-#include "../include/common.h"
-#include "../include/bg_cache.h"
-#include "../include/loggingInterface.h"
+#include "include/dex_interface.h"
+#include "include/common.h"
+#include "include/bg_cache.h"
+#include "include/loggingInterface.h"
 #include <string>
 #include <optional>
 #include <vector>
@@ -30,15 +31,15 @@
 #include <thread>
 #include <memory>
 
-class dexcom_share final
+class dexcom_share final : public virtual dex_interface
 {
    public:
       using returnType = std::optional<std::string>;
       using vector_BG  = std::vector<data::bg_data>;
 
    private:
-      const std::string        m_strShareUrlbase       = "https://share2.dexcom.com/";
-      //const std::string        m_strShareUrlbase       = "http://127.0.0.1:8081/";
+      //const std::string        m_strShareUrlbase       = "https://share2.dexcom.com/";
+      const std::string        m_strShareUrlbase       = "http://127.0.0.1:8081/";
       const std::string        m_strShareLogin         = "ShareWebServices/Services/General/LoginPublisherAccountByName";
       const std::string        m_strShareGetBG         = "ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues";
 
@@ -82,10 +83,10 @@ class dexcom_share final
       dexcom_share( dexcom_share& )  = delete;
       dexcom_share( dexcom_share&& ) = delete;
 
-      void userName  ( const std::string& a_strUserName    ) { m_strUserName  = a_strUserName; }
-      void password  ( const std::string& a_strPassword    ) { m_strPassword  = a_strPassword; }
-      void accoundId ( const std::string& a_strAccountId   ) { m_strAccoundId = a_strAccountId; }
-      void setTimeout( const int32_t      a_nTimoutSeconds ) { m_nReqTimeout_sec = a_nTimoutSeconds; }
+      virtual void userName  ( const std::string& a_strUserName    ) { m_strUserName  = a_strUserName; }
+      virtual void password  ( const std::string& a_strPassword    ) { m_strPassword  = a_strPassword; }
+      virtual void accoundId ( const std::string& a_strAccountId   ) { m_strAccoundId = a_strAccountId; }
+      virtual void setTimeout( const int32_t      a_nTimoutSeconds ) { m_nReqTimeout_sec = a_nTimoutSeconds; }
 
       bool getBG_Reading( vector_BG& a_vBg );
 
@@ -94,11 +95,11 @@ class dexcom_share final
       void wait()           { if( m_thdDexcomShare.joinable() == true ) m_thdDexcomShare.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }
       
-      bool isError() const{ return m_errorList.size() > 0; }
-      const auto& errors() const { return m_errorList; }
-      void clearErrors()   { m_errorList.clear(); }
+      bool        isError() const { return m_errorList.size() > 0; }
+      const auto& errors()  const { return m_errorList; }
+      void        clearErrors()   { m_errorList.clear(); }
 
-      int32_t     slope_string_to_number( const std::string a_strSlope );
-      std::string slope_number_to_string( const int32_t a_nSlope );
+      static int32_t     slope_string_to_number( const std::string a_strSlope );
+      static std::string slope_number_to_string( const int32_t a_nSlope );
 
 };

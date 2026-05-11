@@ -75,13 +75,23 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
         std::this_thread::yield( ); // spin until reader is ready
     }
     m_thdReader = std::move( thd );
-    m_ds.userName( strAccount );
-    m_ds.password( strPassword );
-    m_ds.accoundId( strApplicationId );
 
+    if( true )
+    {
+        m_pDexData = new dexcom_share();
+        dynamic_cast<dexcom_share*> (m_pDexData)->userName( strAccount );
+        dynamic_cast<dexcom_share*> (m_pDexData)->password( strPassword );
+        dynamic_cast<dexcom_share*> (m_pDexData)->accoundId( strApplicationId );
+    } else
+    {
+        dynamic_cast<dexcom_file*> (m_pDexData)->setFile( "bad_values/dexcom-3-lines.xml" );
+    }
+
+    // start dex blood sugar reader
     m_appLogger.logInfo( "starting dexshare" );
-    m_ds.start( m_spMonitor, m_appLogger, m_cache.lastReadDate() );
+    m_pDexData->start( m_spMonitor, m_appLogger, m_cache.lastReadDate() );
 
+    // rest server
     int32_t nPort = 8080;
     a_cfg.get( "port", nPort );
     thread thdRest( &restServer::restHttpServer::startRestServer, &m_rest, nPort, &a_cfg, &m_cache, &m_appLogger );
@@ -97,7 +107,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
 ///
 void dexshareManager::wait()
 {
-    m_ds.wait();   // wait for dexcom_share::_start to end
+    m_pDexData->wait();   // wait for dexcom_share::_start to end
     m_appLogger.logDebug( "dexshare closing" );
     m_spMonitor->signal();      // issue a sig to dexshareManager::reader in case in wait
     m_thdReader.join();  // wait for dexshareManager::reader to stop
@@ -114,7 +124,7 @@ void dexshareManager::wait()
 void dexshareManager::stop()
 {
     m_rest.stopRestServer();
-    m_ds.stop();  // stop dexcom_share::_start
+    m_pDexData->stop();  // stop dexcom_share::_start
     m_appLogger.logDebug( "stop issued on dexcom share BG requester" );
     m_bReaderStop = true;   // stop dexshareManager::reader
     m_appLogger.logDebug( "stop issued on dexcom BG reader" );
@@ -139,7 +149,7 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
         m_spMonitor->wait();   // signaled whenever data is ready
         if( m_bReaderStop == true ) continue;
         m_appLogger.logDebug( "bg reader: read bg" );
-        m_ds.getBG_Reading( vBg );
+        m_pDexData->getBG_Reading( vBg );
 
         for( const auto &bg : vBg  )
         {

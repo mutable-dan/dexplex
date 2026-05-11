@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../include/loggingInterface.h"
-#include "../include/dex-rest.h"
-#include "../include/bg_cache.h"
-#include "../include/common.h"
-#include "../include/restServer.h"
+#include "include/loggingInterface.h"
+#include "include/dex_interface.h"
+#include "include/dex-rest.h"
+#include "include/dex-file.h"
+#include "include/bg_cache.h"
+#include "include/common.h"
+#include "include/restServer.h"
 
 #include <mutlibs/config.h>
 #include <mutlibs/util.h>
@@ -26,7 +28,8 @@
 class dexshareManager
 {
    private:
-      dexcom_share                  m_ds;
+      //dexcom_share                  m_ds;
+      dex_interface                 *m_pDexData = nullptr;
       restServer::restHttpServer    m_rest;
 
       std::thread                   m_thdReader;

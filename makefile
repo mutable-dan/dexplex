@@ -6,7 +6,7 @@ INCLUDE_DIR = -I. -I.. -I../cpr/include/  -I../restbed/source
 
 
 EXE      = dexplexd
-SOURCE   = src/main.cpp src/dex-rest.cpp src/dex-mgr.cpp src/bg_cache.cpp src/common.cpp src/restServer.cpp
+SOURCE   = src/main.cpp src/dex-rest.cpp src/dex-mgr.cpp src/bg_cache.cpp src/common.cpp src/restServer.cpp src/dex-file.cpp
 LINKLIBS = -L/usr/lib/libdaemon/ -L../cpr/build/lib/ -lspdlog -lcpr -lcurl -ldaemon -lmut -lstdc++fs -lboost_date_time -lfmt -lpthread 
 STATICLIBS =  -L ../restbed/build/ -lrestbed
 
@@ -19,7 +19,7 @@ CFLAGSALL     = -std=c++17 -Wall -Wextra -Werror -Wshadow -march=native -fno-def
 CFLAGSALL     = -std=c++17 
 CFLAGSALL    += -DSPDLOG_COMPILED_LIB
 CFLAGSRELEASE = -O2 -DNDEBUG $(CFLAGSALL)
-CFLAGSDEBUG   = -ggdb3 -DDEBUG $(CFLAGSALL)
+CFLAGSDEBUG   = -ggdb3 -O0 -DDEBUG $(CFLAGSALL)
 
 .PHONY: release
 release: CFLAGS = $(CFLAGSRELEASE)
@@ -47,3 +47,7 @@ uninstall :
 
 clean :
 	rm -f src/*.o src/*.d $(EXE) 
+
+cleanobj :
+	rm -f src/*.o src/*.d
+ 

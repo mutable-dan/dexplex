@@ -1,6 +1,6 @@
 #include "../include/dex-rest.h"
 #include "../include/common.h"
-#include <ctype.h>
+#include <cctype>
 #include <sstream>
 #include <future>
 #include <chrono>
@@ -150,7 +150,7 @@ auto dexcom_share::dexcomShareData()
    if( (m_bLoggedIn == false) || (m_strSessionId.length() == 0) )
    {
        strReturnMessage = "dexcom: not logged in to dexcom or no sessionid";
-      return std::make_tuple( false, 0LU, strReturnMessage );
+      return std::make_tuple( false, 0LU, std::move(strReturnMessage) );
    }
 
    int32_t nCount  = 1;      // max record to get per call
@@ -180,7 +180,7 @@ auto dexcom_share::dexcomShareData()
       sstrErr << "dexcom: bg request - error posting:" << response.text << ", BG reading failed" << e.what();
       error( sstrErr.str() );
       strReturnMessage = e.what();
-      return std::make_tuple( false, 0LU, strReturnMessage );
+      return std::make_tuple( false, 0LU, std::move(strReturnMessage) );
    }
    if( response.status_code != m_cnHttpOk )
    {
@@ -188,7 +188,7 @@ auto dexcom_share::dexcomShareData()
       sstrErr << "dexcom: bg error code - error:" << response.status_code << ", " << response.text << ", reading failed";
       error( sstrErr.str() );
       strReturnMessage = "dexcom: get bg data post failed hhtp not ok";
-      return std::make_tuple( false, 0LU, strReturnMessage );
+      return std::make_tuple( false, 0LU, std::move(strReturnMessage) );
    }
 
    json::json js_results;
@@ -204,7 +204,7 @@ auto dexcom_share::dexcomShareData()
       sstrErr << "bg parse - error parsing to json:" << response.text << ", bg reading failed" << pe.what();
       error( sstrErr.str() );
       strReturnMessage = "failed to parse response";
-      return std::make_tuple( false, 0LU, strReturnMessage );
+      return std::make_tuple( false, 0LU, std::move(strReturnMessage) );
    }
 
    // protect m_vReadings 

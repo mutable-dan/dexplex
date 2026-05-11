@@ -148,6 +148,7 @@ namespace restServer
     /// \param session
     /// \note nighscout glucose api
     /// \test curl  "http://127.0.0.1/api/v1/entries.json?count=1&rr=1587961452708" -H  "accept: application/json" -H "User-Agent: xDrip+"| python3 -m json.tool
+    /// \test curl  "https:/dexplex.shawanga.com/api/v1/entries.json?count=1&rr=1587961452708" -H  "accept: application/json" -H "User-Agent: xDrip+"| python3 -m json.tool
     void restServer::restHttpServer::entry_handler( const shared_ptr< rest::Session > session )
     {
         // api-secret
