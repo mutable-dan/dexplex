@@ -2,7 +2,8 @@
 
 #include <string>
 #include <future>
-#include <fstream>
+#include <iostream>
+#include <string.h>
 #include "cpr/async.h"
 
 using namespace std;
@@ -27,7 +28,7 @@ bool dexcom_file::start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::
 
 void dexcom_file::_start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log )
 {
-   //a_log.logInfo( "bg loop: dex file started" );
+   a_log.logInfo( "bg loop: dex file started" );
    while ( m_bStop == false )
    {
       auto [bRes, ulDispDate, strReturnInfo] = dexcomFileData();
@@ -40,15 +41,38 @@ auto dexcom_file::dexcomFileData() -> std::tuple<bool, uint64_t, std::string>
 {
    string strReturnMessage;
    uint64_t ulLastDispDate = 0;
+   filesystem::path pth = filesystem::current_path();
    if( m_bIsValidPath )
    {
       if( filesystem::exists( m_path ) )
       {
-         char szBuffer[1024];
+         char szBuffer[8192];
+         char szMatch[dexcom_file::m_unMatchEnd - m_unMatchStart + 1];
          ifstream inf( m_path, ios::in );
          if( inf.is_open() )
          {
-            inf.getline( szBuffer, sizeof(szBuffer) );
+            while ( !inf.eof() )
+            {
+               if( inf.bad() || inf.fail() )
+               {
+                  cout << "error: check buffer size" << endl;
+               }
+               memset( szBuffer, 0, sizeof( szBuffer ) );
+               inf.getline( szBuffer, sizeof(szBuffer) );
+               if( strlen( szBuffer ) >= dexcom_file::m_unMatchEnd )
+               {
+                  memset( szMatch, 0, sizeof(szMatch) );
+                  char szTmp = szBuffer[dexcom_file::m_unMatchEnd];
+                  szBuffer[dexcom_file::m_unMatchEnd] = 0;
+                  memccpy( szMatch, szBuffer+dexcom_file::m_unMatchStart, 0, sizeof(szMatch)  );
+                  szBuffer[dexcom_file::m_unMatchEnd] = szTmp;
+                  if( 0 == memcmp( szMatch, "entry_handler debug: [", dexcom_file::m_unMatchEnd - dexcom_file::m_unMatchStart ) )
+                  {
+                     cout << "found line: " << szBuffer+dexcom_file::m_unDataStart << endl;
+                  }
+               }
+
+            }
          }
       }
 

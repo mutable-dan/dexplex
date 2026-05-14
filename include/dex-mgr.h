@@ -29,7 +29,8 @@ class dexshareManager
 {
    private:
       //dexcom_share                  m_ds;
-      dex_interface                 *m_pDexData = nullptr;
+      dex_interface                 *
+          m_pDexData = nullptr;
       restServer::restHttpServer    m_rest;
 
       std::thread                   m_thdReader;

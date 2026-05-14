@@ -314,11 +314,11 @@ void restServer::restHttpServer::startRestServer( const uint16_t a_unPort, mutli
         return;
     }
 
-    auto fnEntry = [=]( const std::shared_ptr<rest::Session> a_sess ) -> void
+    auto fnEntry = [=, this]( const std::shared_ptr<rest::Session> a_sess ) -> void
     {
         this->entry_handler( a_sess );
     };
-    auto fnCert = [=]( const std::shared_ptr<rest::Session> a_sess ) -> void
+    auto fnCert = [=, this]( const std::shared_ptr<rest::Session> a_sess ) -> void
     {
         this->cert_challenge( a_sess );
     };

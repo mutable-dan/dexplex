@@ -27,6 +27,8 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <fstream>
+
 
 class dexcom_file final : public virtual dex_interface
 {
@@ -39,6 +41,7 @@ class dexcom_file final : public virtual dex_interface
       std::filesystem::path   m_path;
       bool                    m_bIsValidPath    = false;
       mutable std::mutex      m_muxBG;
+      std::fstream::pos_type  m_filePosition;
 
       std::atomic_bool  m_bStop              = false;
       std::atomic_bool  m_bIsDataAvail       = false;
@@ -46,6 +49,11 @@ class dexcom_file final : public virtual dex_interface
 
       auto dexcomFileData() -> std::tuple<bool, uint64_t, std::string>;
       void _start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log );
+
+      static constexpr uint8_t m_unMatchStart = 55;
+      static constexpr uint8_t m_unMatchEnd   = 77;
+      static constexpr uint8_t m_unDataStart  = 76;
+
 
 
    public:
@@ -57,7 +65,7 @@ class dexcom_file final : public virtual dex_interface
       bool getBG_Reading( vector_BG& a_vBg );
       bool setFile( const std::string& a_strPath );
 
-      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log, int64_t a_lastReadDate );
+      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log, int64_t a_lastReadDate ) override;
       void stop()           { m_bStop = true; }
       void wait()           { if( m_thdDexcomFile.joinable() == true ) m_thdDexcomFile.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }

@@ -90,7 +90,7 @@ class dexcom_share final : public virtual dex_interface
 
       bool getBG_Reading( vector_BG& a_vBg );
 
-      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log, int64_t a_lastReadDate );
+      bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log, int64_t a_lastReadDate ) override;
       void stop()           { m_bStop = true; }
       void wait()           { if( m_thdDexcomShare.joinable() == true ) m_thdDexcomShare.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }
