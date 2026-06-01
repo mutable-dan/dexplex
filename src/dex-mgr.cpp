@@ -87,7 +87,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
         m_pDexData = new dexcom_file();
         // dexcom_file *df = dynamic_cast<dexcom_file*>( m_pDexData );
         // (dynamic_cast<dexcom_file*> (m_pDexData))->setFile( "/home/gdan/dev/dexcom/dexplex/bad_values/live/dexcom-3-lines.xml" );
-        (dynamic_cast<dexcom_file*> (m_pDexData))->setFile( "/home/gdan/dev/dexcom/dexplex/bad_values/live/bad.log" );
+        (dynamic_cast<dexcom_file*> (m_pDexData))->setFile( "/home/gdan/dev/dexcom/dexplex/bad_values/live/bg_2026-04-18.log" );
     }
 
     // start dex blood sugar reader

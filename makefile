@@ -15,8 +15,8 @@ DEPS     = $(SOURCE:.cpp=.d)
 
 -include $(DEPS)
 
-CFLAGSALL     = -std=c++17 -Wall -Wextra -Werror -Wshadow -march=native -fno-default-inline -fno-stack-protector -pthread -Wall -Werror -pedantic -Wextra -Waddress -Warray-bounds -Wno-builtin-macro-redefined -Wundef
-CFLAGSALL     = -std=c++17 
+CFLAGSALL     = -std=c++23 -Wall -Wextra -Werror -Wshadow -march=native -fno-default-inline -fno-stack-protector -pthread -Wall -Werror -pedantic -Wextra -Waddress -Warray-bounds -Wno-builtin-macro-redefined -Wundef
+CFLAGSALL     = -std=c++23 
 CFLAGSALL    += -DSPDLOG_COMPILED_LIB
 CFLAGSRELEASE = -O2 -DNDEBUG $(CFLAGSALL)
 CFLAGSDEBUG   = -ggdb3 -O0 -DDEBUG $(CFLAGSALL)

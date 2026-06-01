@@ -2,11 +2,23 @@
 
 #include <string>
 #include <future>
-#include <iostream>
 #include <string.h>
+#include <iostream>
+#include <format>
+
+#include "corvusoft/restbed/string.hpp"
 #include "cpr/async.h"
 
 using namespace std;
+
+
+dexcom_file::~dexcom_file()
+{
+   if( m_if.is_open() )
+   {
+      m_if.close();
+   }
+}
 
 bool dexcom_file::setFile( const std::string &a_strPath )
 {
@@ -19,11 +31,22 @@ bool dexcom_file::setFile( const std::string &a_strPath )
 
 bool dexcom_file::start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log &a_log, int64_t a_lastReadDate )
 {
-   m_lastReadDate = a_lastReadDate;
-   a_log.logInfo( "dex file stub called" );
-   thread thd( &dexcom_file::_start, this, a_pSync, a_log );
-   m_thdDexcomFile = std::move( thd );
-   return true;
+   if( m_bIsValidPath )
+   {
+      if( filesystem::exists( m_path ) )
+      {
+         m_if.open( m_path, ios::in );
+         if( m_if.is_open() )
+         {
+            m_lastReadDate = a_lastReadDate;
+            a_log.logInfo( "dex file stub called" );
+            thread thd( &dexcom_file::_start, this, a_pSync, a_log );
+            m_thdDexcomFile = std::move( thd );
+            return true;
+         }
+      }
+   }
+   return false;
 }
 
 void dexcom_file::_start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log )
@@ -32,60 +55,66 @@ void dexcom_file::_start( std::shared_ptr<sync_tools::monitor> a_pSync, logging:
    while ( m_bStop == false )
    {
       auto [bRes, ulDispDate, strReturnInfo] = dexcomFileData();
-
+      this_thread::sleep_for( chrono::seconds( 15 ) );
    }
 }
 
 
 auto dexcom_file::dexcomFileData() -> std::tuple<bool, uint64_t, std::string>
 {
+   data::bg_data bg_value;
    string strReturnMessage;
    uint64_t ulLastDispDate = 0;
-   filesystem::path pth = filesystem::current_path();
-   if( m_bIsValidPath )
+
+   char szBuffer[8192];
+
+   if( !m_if.eof() )
    {
-      if( filesystem::exists( m_path ) )
+      if( m_if.bad() || m_if.fail() )
       {
-         char szBuffer[8192];
-         char szMatch[dexcom_file::m_unMatchEnd - m_unMatchStart + 1];
-         ifstream inf( m_path, ios::in );
-         if( inf.is_open() )
-         {
-            while ( !inf.eof() )
-            {
-               if( inf.bad() || inf.fail() )
-               {
-                  cout << "error: check buffer size" << endl;
-               }
-               memset( szBuffer, 0, sizeof( szBuffer ) );
-               inf.getline( szBuffer, sizeof(szBuffer) );
-               if( strlen( szBuffer ) >= dexcom_file::m_unMatchEnd )
-               {
-                  memset( szMatch, 0, sizeof(szMatch) );
-                  char szTmp = szBuffer[dexcom_file::m_unMatchEnd];
-                  szBuffer[dexcom_file::m_unMatchEnd] = 0;
-                  memccpy( szMatch, szBuffer+dexcom_file::m_unMatchStart, 0, sizeof(szMatch)  );
-                  szBuffer[dexcom_file::m_unMatchEnd] = szTmp;
-                  if( 0 == memcmp( szMatch, "entry_handler debug: [", dexcom_file::m_unMatchEnd - dexcom_file::m_unMatchStart ) )
-                  {
-                     cout << "found line: " << szBuffer+dexcom_file::m_unDataStart << endl;
-                  }
-               }
-
-            }
-         }
+         strReturnMessage = "file descripter fail";
       }
+      memset( szBuffer, 0, sizeof( szBuffer ) );
+      m_if.getline( szBuffer, sizeof(szBuffer) );
+      szBuffer[m_cnDT_End] = 0;
+      string strDT = szBuffer+m_cnDT_Start;
+      szBuffer[m_cnST_End] = 0;
+      string strST = szBuffer+m_cnST_Start;
+      szBuffer[m_cnWT_End] = 0;
+      string strWT = szBuffer+m_cnWT_Start;
 
-   } else
-   {
-      string strError( "invalid path" );
-      return std::make_tuple( true, ulLastDispDate, std::move(strError) );
+      // bg can be 2 or 3 chars
+      // bg:66,trend:4
+      // bg -> position 165 -> find ,
+      char* pBG_start = strchr( szBuffer+161, ':' ) + 1;
+      char* pBG_end   = strchr( szBuffer+161, ',' );
+      *pBG_end = 0;
+      string strBG = pBG_start;
+      string strTrend = "0";  // ignore
+
+      bg_value.strDT = strDT;
+      bg_value.strST = strST;
+      bg_value.strWT = strWT;
+      bg_value.DT = stoll( strDT );
+      bg_value.ST = stoll( strST );
+      bg_value.WT = stoll( strWT );
+      bg_value.value = stoi( strBG );
+      bg_value.trend = 4;
+
+      if( bg_value.DT > m_lastReadDate )
+      {
+         m_lastReadDate = bg_value.ST;
+      }
+      m_vReadings.push_back( bg_value );
    }
 
-   return std::make_tuple( true, ulLastDispDate, std::move(strReturnMessage) );
+   return std::make_tuple( true, bg_value.DT, std::move(strReturnMessage) );
 }
 
 bool dexcom_file::getBG_Reading( vector_BG &a_vBg )
 {
+   lock_guard<std::mutex> lg( m_muxBG );
+   a_vBg = m_vReadings;
+   m_vReadings.clear();
    return true;
 }

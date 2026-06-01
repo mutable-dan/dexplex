@@ -30,6 +30,7 @@
 #include <fstream>
 
 
+
 class dexcom_file final : public virtual dex_interface
 {
    public:
@@ -37,7 +38,7 @@ class dexcom_file final : public virtual dex_interface
 
    private:
       int64_t                 m_lastReadDate    = 0;
-      vector_BG               m_bgData;
+      vector_BG               m_vReadings;
       std::filesystem::path   m_path;
       bool                    m_bIsValidPath    = false;
       mutable std::mutex      m_muxBG;
@@ -50,16 +51,20 @@ class dexcom_file final : public virtual dex_interface
       auto dexcomFileData() -> std::tuple<bool, uint64_t, std::string>;
       void _start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log );
 
-      static constexpr uint8_t m_unMatchStart = 55;
-      static constexpr uint8_t m_unMatchEnd   = 77;
-      static constexpr uint8_t m_unDataStart  = 76;
+      constexpr static int16_t m_cnDT_Start   = 111;
+      constexpr static int16_t m_cnDT_End     = 124;
+      constexpr static int16_t m_cnST_Start   = 128;
+      constexpr static int16_t m_cnST_End     = 141;
+      constexpr static int16_t m_cnWT_Start   = 145;
+      constexpr static int16_t m_cnWT_End     = 158;
 
-
+      std::ifstream m_if;
 
    public:
       dexcom_file() {}
       dexcom_file( dexcom_file& )  = delete;
       dexcom_file( dexcom_file&& ) = delete;
+      ~dexcom_file();
    
 
       bool getBG_Reading( vector_BG& a_vBg );
