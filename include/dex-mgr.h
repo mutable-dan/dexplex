@@ -47,6 +47,7 @@ class dexshareManager
 
     public:
       bool start( mutlib::config                                                          &a_cfg,
+                  bool                                                                    a_bUseDexcom,
                   logging::log                                                            &a_log,
                   std::function< void( const std::string &) >                             &a_logbg );
       void stop();

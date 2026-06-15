@@ -1,6 +1,8 @@
 #include "../include/dex-mgr.h"
 #include "../../json/include/nlohmann/json.hpp"
 
+#include <iostream>
+
 #include <boost/format.hpp>
 
 using namespace std;
@@ -15,6 +17,7 @@ using json = nlohmann::json;
 /// \return
 ///
 bool dexshareManager::start( mutlib::config                              &a_cfg,
+                             bool                                        a_bUseDexcom,
                              logging::log                                &a_log,
                              std::function< void( const std::string &) > &a_logbg )
 {
@@ -24,6 +27,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     string  strPassword;
     string  strApplicationId;
     int32_t nHttpTimout = 30;
+    string  strLogRead;
     bool bComplete = true;
     stringstream sstr;
     sstr << "errors processing config file: ";
@@ -49,6 +53,11 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
             bComplete = false;
             sstr << " missing applicationid";
         }
+        if( false == a_cfg.get( "fileread", strLogRead ) )
+        {
+            strLogRead = "bg.log";
+        }
+
     }
     // config read
 
@@ -76,7 +85,7 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     }
     m_thdReader = std::move( thd );
 
-    if( false )
+    if( a_bUseDexcom )
     {
         m_pDexData = new dexcom_share();
         dynamic_cast<dexcom_share*> (m_pDexData)->userName( strAccount );
@@ -85,9 +94,8 @@ bool dexshareManager::start( mutlib::config                              &a_cfg,
     } else
     {
         m_pDexData = new dexcom_file();
-        // dexcom_file *df = dynamic_cast<dexcom_file*>( m_pDexData );
-        // (dynamic_cast<dexcom_file*> (m_pDexData))->setFile( "/home/gdan/dev/dexcom/dexplex/bad_values/live/dexcom-3-lines.xml" );
-        (dynamic_cast<dexcom_file*> (m_pDexData))->setFile( "/home/gdan/dev/dexcom/dexplex/bad_values/live/bg_2026-04-18.log" );
+        m_appLogger.logInfo( (boost::format( "reading BG numbers from %s") % filesystem::current_path().string()).str() );
+        (dynamic_cast<dexcom_file*> (m_pDexData))->setFile( filesystem::current_path().string() + strLogRead );
     }
 
     // start dex blood sugar reader
@@ -159,9 +167,10 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
             auto [bRes, prevValue] = m_cache.front();
             if( bRes == true )
             {
-                if( bg.DT == prevValue.DT )
+                if( bg.DT <= prevValue.DT )
                 {
                     m_appLogger.logWarn( "bg reader: BG has not updated since last reading, duplicate" );
+                    cout << "new bg:" << bg.DT << " cache bg:" <<prevValue.DT << "    n-o:" << bg.DT-prevValue.DT << endl;
                     continue;
                 }
             }
@@ -170,6 +179,9 @@ void dexshareManager::reader( std::function< void( const std::string &) > a_log_
             common::timeTickToString( bg.ST, strSystemTime );
             common::timeTickToString( bg.DT, strDisplayTime );
             a_log_bg( (boost::format( strBgFormat ) % strSystemTime % strDisplayTime % bg.DT % bg.ST % bg.WT % bg.value % static_cast<int32_t>(bg.trend)).str() );
+
+            string strBgFormat2 = R"(displaytime:%s -- st:%d -- bg:%d)";
+            cout << (boost::format( strBgFormat2 ) % strDisplayTime % bg.ST % bg.value ) << endl;
             m_cache.push( bg );
         }
         m_appLogger.logDebug( "bg reader: read complete" );

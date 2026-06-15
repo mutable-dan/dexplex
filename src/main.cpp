@@ -32,6 +32,7 @@ int main( int argc, char* argv[] )
         cerr << " where options:" << endl;
         cerr << "    -f  run app in foreground and do not redirect stdout and stderr" << endl;
         cerr << "    -d  do not redirect stdout and stderr - usefull for running app as daemon with console output" << endl;
+        cerr << "    -p  read bg numbers from log (only in foreground) such as bg_YYYY-MM-DD.log instead of dexcom as specified in config file. default bg.log" << endl;
     };
     const char pszConfig[] = "dex.config";
 
@@ -52,7 +53,6 @@ int main( int argc, char* argv[] )
     {
         strLogLevel = "info";
     }
-
 
     logging::log appLog;
     auto bglog = spdlog::daily_logger_mt( "bg", strLogPath + "/bg.log", 0, 0 );   // blood glucose log
@@ -149,6 +149,7 @@ int main( int argc, char* argv[] )
         qCommands.pop();
         bool bRunForeground( false ) ;
         bool bDebug( false );
+        bool bUseDexcom( true );
 
         if( !qCommands.empty() )
         {
@@ -167,13 +168,21 @@ int main( int argc, char* argv[] )
             }
         }
 
+        if( !qCommands.empty() )
+        {
+            if( qCommands.front() == "-p" )
+            {
+                bUseDexcom = false;
+                qCommands.pop();
+            }
+        }
 
         if( true == bRunForeground )
         {
             appLog.logInfo( "running in foreground" );
             // start prog body
             dexshareManager dsm;
-            if( true == dsm.start( cfg, appLog, fn_bgLog ) )  // start app, send cfg, applogger and blood glucose callback
+            if( true == dsm.start( cfg, bUseDexcom, appLog, fn_bgLog ) )  // start app, send cfg, applogger and blood glucose callback
             {
                 appLog.logInfo( "started, main in wait state" );
                 app.runForeground();    // wait for signal, ctrl-c or sig15
@@ -197,7 +206,7 @@ int main( int argc, char* argv[] )
             dexshareManager dsm;
             try
             {
-                if( true == dsm.start( cfg, appLog, fn_bgLog ) )
+                if( true == dsm.start( cfg, bUseDexcom, appLog, fn_bgLog ) )
                 {
                     appLog.logInfo( "started, main in wait state" );
                     app.wait();  // wait for sig15 issue by stop

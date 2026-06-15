@@ -279,8 +279,7 @@ bool dexcom_share::getBG_Reading( dexcom_share::vector_BG &a_vbg )
 {
 
    lock_guard<std::mutex> lg( m_muxBG );
-   a_vbg = m_vReadings;
-   m_vReadings.clear();
+   a_vbg = std::move( m_vReadings );
    return true;
 }
 

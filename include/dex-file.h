@@ -28,8 +28,8 @@
 #include <atomic>
 #include <thread>
 #include <fstream>
-
-
+#include <semaphore.h>
+#include <signal.h>
 
 class dexcom_file final : public virtual dex_interface
 {
@@ -48,7 +48,9 @@ class dexcom_file final : public virtual dex_interface
       std::atomic_bool  m_bIsDataAvail       = false;
       std::thread       m_thdDexcomFile;
 
-      auto dexcomFileData() -> std::tuple<bool, uint64_t, std::string>;
+      static void signal_handler( const int32_t a_iSigNum );
+
+      void dexcomFileData(); // -> std::tuple<bool, uint64_t, std::string>;
       void _start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log );
 
       constexpr static int16_t m_cnDT_Start   = 111;
@@ -60,18 +62,21 @@ class dexcom_file final : public virtual dex_interface
 
       std::ifstream m_if;
 
+
+
    public:
       dexcom_file() {}
       dexcom_file( dexcom_file& )  = delete;
       dexcom_file( dexcom_file&& ) = delete;
       ~dexcom_file();
    
+      static sem_t             m_readerSem;
 
       bool getBG_Reading( vector_BG& a_vBg );
       bool setFile( const std::string& a_strPath );
 
       bool start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log& a_log, int64_t a_lastReadDate ) override;
-      void stop()           { m_bStop = true; }
+      void stop()           { m_bStop = true; sem_post( &dexcom_file::m_readerSem ); }
       void wait()           { if( m_thdDexcomFile.joinable() == true ) m_thdDexcomFile.join(); }
       bool isNewDataReady() { return m_bIsDataAvail; }
 

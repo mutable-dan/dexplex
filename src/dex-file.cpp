@@ -1,16 +1,16 @@
 #include "../include/dex-file.h"
 
+#include <csignal>
 #include <string>
 #include <future>
 #include <string.h>
 #include <iostream>
-#include <format>
 
-#include "corvusoft/restbed/string.hpp"
 #include "cpr/async.h"
 
 using namespace std;
 
+sem_t dexcom_file::m_readerSem;
 
 dexcom_file::~dexcom_file()
 {
@@ -52,15 +52,22 @@ bool dexcom_file::start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::
 void dexcom_file::_start( std::shared_ptr<sync_tools::monitor> a_pSync, logging::log a_log )
 {
    a_log.logInfo( "bg loop: dex file started" );
+   sem_init( &dexcom_file::m_readerSem, 0, 0 );
+   signal( SIGUSR1, dexcom_file::signal_handler );
+
    while ( m_bStop == false )
    {
-      auto [bRes, ulDispDate, strReturnInfo] = dexcomFileData();
-      this_thread::sleep_for( chrono::seconds( 15 ) );
+      dexcomFileData();
+      a_pSync->signal();  // signal reader
+      sem_wait( &dexcom_file::m_readerSem );
+      //cout << "file reader signal" << endl;
    }
+   sem_destroy( &dexcom_file::m_readerSem );
 }
 
 
-auto dexcom_file::dexcomFileData() -> std::tuple<bool, uint64_t, std::string>
+//auto dexcom_file::dexcomFileData() -> std::tuple<bool, uint64_t, std::string>
+void dexcom_file::dexcomFileData(  )
 {
    data::bg_data bg_value;
    string strReturnMessage;
@@ -108,13 +115,19 @@ auto dexcom_file::dexcomFileData() -> std::tuple<bool, uint64_t, std::string>
       m_vReadings.push_back( bg_value );
    }
 
-   return std::make_tuple( true, bg_value.DT, std::move(strReturnMessage) );
+   //return std::make_tuple( true, bg_value.DT, std::move(strReturnMessage) );
 }
 
 bool dexcom_file::getBG_Reading( vector_BG &a_vBg )
 {
    lock_guard<std::mutex> lg( m_muxBG );
-   a_vBg = m_vReadings;
-   m_vReadings.clear();
+   a_vBg = std::move( m_vReadings );
    return true;
+}
+
+
+void dexcom_file::signal_handler( const int32_t a_iSigNum )
+{
+   //cout << "dexcom_file::signal_handler()" << endl;
+   sem_post( &dexcom_file::m_readerSem );
 }
