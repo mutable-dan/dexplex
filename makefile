@@ -19,7 +19,7 @@ CFLAGSALL     = -std=c++23 -Wall -Wextra -Werror -Wshadow -march=native -fno-def
 CFLAGSALL     = -std=c++23 
 CFLAGSALL    += -DSPDLOG_COMPILED_LIB
 CFLAGSRELEASE = -O2 -DNDEBUG $(CFLAGSALL)
-CFLAGSDEBUG   = -ggdb3 -O0 -DDEBUG $(CFLAGSALL)
+CFLAGSDEBUG   = -ggdb3 -Og -DDEBUG $(CFLAGSALL)
 
 .PHONY: release
 release: CFLAGS = $(CFLAGSRELEASE)
